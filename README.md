@@ -1,2 +1,2 @@
 # rdi_wisski_importer
-Repos data insertion into wisski 89
+Repo for data insertion into wisski 89
