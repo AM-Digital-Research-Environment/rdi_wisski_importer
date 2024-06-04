@@ -11,6 +11,7 @@ import numpy as np
 from pymongo import MongoClient
 from SPARQLWrapper import SPARQLWrapper, JSON, CSV
 import io
+import json
 
 
 # Function for fetching all documents belong to a DB and Collection
@@ -29,13 +30,29 @@ def mongodata_fetch(db_name, collection_name):
 # Repo used: "http://132.180.10.160:7200/repositories/amo_data" (WissKI_89)
 
 
-def entity_uri(query_string, return_format='json'):
+def entity_uri(search_value, query_string, return_format='json'):
     format_dict = {'json': JSON, 'csv': CSV}
     sparql = SPARQLWrapper("http://132.180.10.160:7200/repositories/amo_data")
     sparql.setReturnFormat(format_dict[return_format])
-    sparql.setQuery(query_string)
+    sparql.setQuery(query_string.format(search_value))
     query_response = sparql.queryAndConvert()
     if return_format == 'json':
-        return query_response["results"]["bindings"]
+        try:
+            return query_response["results"]["bindings"][0]['id']['value']
+        except IndexError:
+            return None
     elif return_format == 'csv':
-        return pd.read_csv(io.StringIO(query_response.decode('utf-8')))
+        try:
+            return pd.read_csv(io.StringIO(query_response.decode('utf-8')))
+        except IndexError:
+            return None
+
+# Function for the json data retrieval
+
+
+def json_file(file_path):
+    with open(file_path) as file_obj:
+        try:
+            return json.load(file_obj)
+        finally:
+            file_obj.close()
