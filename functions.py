@@ -30,11 +30,11 @@ def mongodata_fetch(db_name, collection_name):
 # Repo used: "***REMOVED******REMOVED***" (WissKI_89)
 
 
-def entity_uri(search_value, query_string, return_format='json'):
+def entity_uri(search_value: str, query_string: str, return_format='json') -> str | object | None:
     format_dict = {'json': JSON, 'csv': CSV}
     sparql = SPARQLWrapper("***REMOVED******REMOVED***")
     sparql.setReturnFormat(format_dict[return_format])
-    sparql.setQuery(query_string.format(search_value))
+    sparql.setQuery(query_string.format(search_value=search_value))
     query_response = sparql.queryAndConvert()
     if return_format == 'json':
         try:
@@ -50,7 +50,7 @@ def entity_uri(search_value, query_string, return_format='json'):
 # Function for the json data retrieval
 
 
-def json_file(file_path):
+def json_file(file_path: str):
     with open(file_path) as file_obj:
         try:
             return json.load(file_obj)
