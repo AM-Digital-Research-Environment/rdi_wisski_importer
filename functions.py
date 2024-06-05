@@ -56,3 +56,15 @@ def json_file(file_path: str):
             return json.load(file_obj)
         finally:
             file_obj.close()
+
+# Function for the entity generation of single
+
+
+def entity_list_generate(value_list, query_name):
+    entity_list = []
+    for entity_value in value_list:
+        uri_value = entity_uri(entity_value, query_name)
+        if uri_value is None:
+            entity_list.append(entity_value)
+        else:
+            entity_list.append(uri_value)
