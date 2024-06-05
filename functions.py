@@ -30,11 +30,17 @@ def mongodata_fetch(db_name, collection_name):
 # Repo used: "http://132.180.10.160:7200/repositories/amo_data" (WissKI_89)
 
 
-def entity_uri(search_value: str, query_string: str, return_format='json') -> str | object | None:
+def entity_uri(search_value: str | dict[str, str],
+               query_string: str,
+               return_format='json',
+               conditional=False) -> str | object | None:
     format_dict = {'json': JSON, 'csv': CSV}
     sparql = SPARQLWrapper("http://132.180.10.160:7200/repositories/amo_data")
     sparql.setReturnFormat(format_dict[return_format])
-    sparql.setQuery(query_string.format(search_value=search_value))
+    if not conditional:
+        sparql.setQuery(query_string.format(search_value))
+    else:
+        sparql.setQuery(query_string.format(**search_value))
     query_response = sparql.queryAndConvert()
     if return_format == 'json':
         try:
@@ -68,3 +74,4 @@ def entity_list_generate(value_list, query_name):
             entity_list.append(entity_value)
         else:
             entity_list.append(uri_value)
+    return entity_list
