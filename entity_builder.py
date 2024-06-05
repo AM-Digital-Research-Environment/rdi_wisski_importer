@@ -21,30 +21,54 @@ from functions import entity_uri, json_file, entity_list_generate
 class DocumentEntity:
 
     def __init__(self, bson_doc):
+        # Document
         self._document = bson_doc
+
+        # Dictionary Objects
         self._bundle = json_file("dicts/bundles.json")
         self._field = json_file("dicts/fields.json")
         self._query = json_file("dicts/sparql_queries.json")
+        self._language = json_file("dicts/lang.json")
+
+        # WissKI Auth
         self._api_url = "http://132.180.10.89/wisski/api/v0"
         self._auth = ("DataManager", "1618931-Multiple-2024")
         self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
         self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
+
         # Core dictionary for Research Data Items
         self._research_data_item = {
+
             # Type of Resource (Mandatory Field)
             self._field.get('f_research_data_item_type_res'): [entity_uri(self._document.get('typeOfResource'),
-                                                                      self._query.get('typeofresource'))],
+                                                                          self._query.get('typeofresource'))],
+
             # Field for Identifiers (Mandatory Field)
             self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
-            # Sponsorship (Mandatory Field)
-            self._field.get('f_research_data_item_sponsor'): self._document.get('sponsor')
-            # Citation
 
+            # Sponsorship (Mandatory Field)
+            self._field.get('f_research_data_item_sponsor'): self._document.get('sponsor'),
+
+            # Project (Mandatory Field)
+            self._field.get('f_research_data_item_project'): [entity_uri(self._document.get('project')['id'],
+                                                                         self._query.get('projectid'))]
         }
     # Entity list of identifiers
 
     def identifier_entities(self):
-        entity_list = []
+
+        # Initialising DRE Identifier
+        dreId_fields = {
+            self._field['f_research_data_item_id_name']: [self._document.get('dre_id')],
+            self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier",
+                                                                     self._query.get('identifier'))]
+        }
+        dreId_entity = Entity(api=self._api, fields=dreId_fields,
+                              bundle_id=self._bundle['g_research_data_item_identifier'])
+
+        entity_list = [dreId_entity]
+
+        # Remaining Standard Identifiers
         for iden in self._document.get('identifier'):
             identifier_fields = {
                 self._field['f_research_data_item_id_name']: [iden.get('identifier')],
@@ -60,8 +84,9 @@ class DocumentEntity:
     # Language
     def langauge(self):
         if not self._document.get('langauge') == []:
+            document_languages = [self._language.get(l) for l in self._document.get('language')]
             self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
-                self._document.get('language'),
+                document_languages,
                 self._query.get('language')
             )
         else:
@@ -69,8 +94,61 @@ class DocumentEntity:
 
     # Citation
     def citation(self):
-        if not self._document.get(citation) == []:
+        if not self._document.get('citation') == []:
             self._research_data_item[self._field.get('f_research_data_item_citation')] = self._document.get('citation')
+        else:
+            pass
+
+    # Geographic Location
+    # TODO: This section needs to reviewed in pathbuilder before building entity structure
+
+    # Current Location
+    # TODO: This section needs to reviewed in pathbuilder before building entity structure
+
+    # URL
+    def url_link(self):
+        if not self._document.get('url') == []:
+            self._research_data_item[self._field.get('f_research_data_item_url')] = self._document.get('url')
+        else:
+            pass
+
+    # Copyright
+    def copyright(self):
+        if not self._document.get('accessCondition')['rights'] == []:
+            self._research_data_item[self._field.get('f_research_data_item_copyright')] = entity_list_generate(
+                self._document.get('accessCondition')['rights'],
+                self._query.get('license')
+            )
+        else:
+            pass
+
+    # Target Audience
+    def target_audience(self):
+        if not self._document.get('targetAudience') == []:
+            self._research_data_item[self._field.get('f_research_data_target_audience')] = self._document.get(
+                "targetAudience")
+        else:
+            pass
+
+    # Abstract
+    def abstract(self):
+        if not self._document.get('url') == []:
+            self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
+        else:
+            pass
+
+    # TODO: No field available on path builder
+    # # Table of Content
+    # def tabel_of_content(self):
+    #     if not self._document.get('tableOfContents') == []:
+    #         self._research_data_item[self._field.get()] = [self._document.get('tableOfContents')]
+    #     else:
+    #         pass
+
+    # Note(s)
+    def note(self):
+        if not self._document.get('url') == []:
+            self._research_data_item[self._field.get('f_research_data_note')] = self._document.get('note')
         else:
             pass
 
@@ -78,4 +156,18 @@ class DocumentEntity:
     def staging(self):
         self.langauge()
         self.citation()
+        self.url_link()
+        self.copyright()
+        self.target_audience()
+        self.abstract()
+        self.note()
         return self._research_data_item
+
+# TODO: Person Entity Updating Class
+# class PersonEntity:
+#
+#     def __init__(self, mongo_list):
+#         self._mongo_list = mongo_list
+#         self._query = json_file("dicts/sparql_queries.json")
+
+# TODO: Institute Entity Updating Class
