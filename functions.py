@@ -33,14 +33,18 @@ def mongodata_fetch(db_name, collection_name):
 def entity_uri(search_value: str | dict[str, str],
                query_string: str,
                return_format='json',
+               value_input=True,
                conditional=False) -> str | object | None:
     format_dict = {'json': JSON, 'csv': CSV}
     sparql = SPARQLWrapper("***REMOVED******REMOVED***")
     sparql.setReturnFormat(format_dict[return_format])
-    if not conditional:
-        sparql.setQuery(query_string.format(search_value))
-    else:
-        sparql.setQuery(query_string.format(**search_value))
+    if value_input:
+        if not conditional:
+            sparql.setQuery(query_string.format(search_value))
+        elif conditional:
+            sparql.setQuery(query_string.format(**search_value))
+    elif not value_input:
+        sparql.setQuery(query_string)
     query_response = sparql.queryAndConvert()
     if return_format == 'json':
         try:
