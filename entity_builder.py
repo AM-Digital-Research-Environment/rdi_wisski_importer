@@ -40,8 +40,8 @@ class DocumentEntity:
         self._research_data_item = {
 
             # Type of Resource (Mandatory Field)
-            self._field.get('f_research_data_item_type_res'): [entity_uri(self._document.get('typeOfResource'),
-                                                                          self._query.get('typeofresource'))],
+            self._field.get('f_research_data_item_type_res'): [
+                entity_uri(self._document.get('typeOfResource'), self._query.get('typeofresource'))],
 
             # Field for Identifiers (Mandatory Field)
             self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
@@ -50,8 +50,8 @@ class DocumentEntity:
             self._field.get('f_research_data_item_sponsor'): self._document.get('sponsor'),
 
             # Project (Mandatory Field)
-            self._field.get('f_research_data_item_project'): [entity_uri(self._document.get('project')['id'],
-                                                                         self._query.get('projectid'))]
+            self._field.get('f_research_data_item_project'): [
+                entity_uri(self._document.get('project')['id'], self._query.get('projectid'))]
         }
     # Entity list of identifiers
 
@@ -60,8 +60,7 @@ class DocumentEntity:
         # Initialising DRE Identifier
         dreId_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('dre_id')],
-            self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier",
-                                                                     self._query.get('identifier'))]
+            self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier", self._query.get('identifier'))]
         }
         dreId_entity = Entity(api=self._api, fields=dreId_fields,
                               bundle_id=self._bundle['g_research_data_item_identifier'])
@@ -72,8 +71,8 @@ class DocumentEntity:
         for iden in self._document.get('identifier'):
             identifier_fields = {
                 self._field['f_research_data_item_id_name']: [iden.get('identifier')],
-                self._field['f_research_data_item_id_type']: [entity_uri(iden.get('identifier_type'),
-                                                                         self._query.get('identifier'))]
+                self._field['f_research_data_item_id_type']: [
+                    entity_uri(iden.get('identifier_type'), self._query.get('identifier'))]
             }
             identifier_entity = Entity(api=self._api,
                                        fields=identifier_fields,
@@ -137,7 +136,7 @@ class DocumentEntity:
         else:
             pass
 
-    # TODO: No field available on path builder
+    # TODO: No field available on pathbuilder
     # # Table of Content
     # def tabel_of_content(self):
     #     if not self._document.get('tableOfContents') == []:
@@ -164,10 +163,14 @@ class DocumentEntity:
         return self._research_data_item
 
 # TODO: Person Entity Updating Class
-# class PersonEntity:
-#
-#     def __init__(self, mongo_list):
-#         self._mongo_list = mongo_list
-#         self._query = json_file("dicts/sparql_queries.json")
+# Person Entity Synchronisation
+class PersonEntity:
+
+    def __init__(self, mongo_auth_string):
+        self._mongo_client = MongoClient(mongo_auth_string)
+        self._mongo_list = self._mongo_client['dev']['persons'].distinct('name')
+        self._query = json_file("dicts/sparql_queries.json")
+        self._wisski_persons = list(entity_uri(search_value="", query_string=self._query.get('personlist'),
+                                               return_format='csv', value_input=False))
 
 # TODO: Institute Entity Updating Class
