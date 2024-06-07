@@ -15,14 +15,12 @@ from wisski.api import Api, Pathbuilder, Entity
 # Local Functions
 from functions import entity_uri, json_file, entity_list_generate
 
-# Class for creating the Research Data Item entity
+# General enitity management variable class
 
 
-class DocumentEntity:
+class GeneralEntity:
 
-    def __init__(self, bson_doc):
-        # Document
-        self._document = bson_doc
+    def __init__(self):
 
         # Dictionary Objects
         self._bundle = json_file("dicts/bundles.json")
@@ -35,6 +33,19 @@ class DocumentEntity:
         self._auth = ("***REMOVED***", "***REMOVED***")
         self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
         self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
+
+
+# Class for creating the Research Data Item entity
+
+class DocumentEntity(GeneralEntity):
+
+    def __init__(self, bson_doc):
+
+        # Super class
+        super().__init__()
+
+        # BSON Metadata Document
+        self._document = bson_doc
 
         # Core dictionary for Research Data Items
         self._research_data_item = {
@@ -162,26 +173,20 @@ class DocumentEntity:
         self.note()
         return self._research_data_item
 
-# TODO: Person Entity Updating Class
+
 # Person Entity Synchronisation
-class PersonEntity:
+
+
+class PersonEntity(GeneralEntity):
 
     def __init__(self, mongo_auth_string):
 
+        # Super Class
+        super().__init__()
+
         # MongoDB
         self._mongo_client = MongoClient(mongo_auth_string)
-
-        # Dictionaries
         self._mongo_list = self._mongo_client['dev']['persons'].distinct('name')
-        self._bundle = json_file("dicts/bundles.json")
-        self._field = json_file("dicts/fields.json")
-        self._query = json_file("dicts/sparql_queries.json")
-
-        # WissKi Auth
-        self._api_url = "http://132.180.10.89/wisski/api/v0"
-        self._auth = ("***REMOVED***", "***REMOVED***")
-        self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
-        self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
 
         # WissKI Data
         self._wisski_persons = list(entity_uri(search_value="", query_string=self._query.get('personlist'),
@@ -189,10 +194,10 @@ class PersonEntity:
 
     def check_missing(self):
         for person_value in self._mongo_list:
-            missing = []
+            missing_values = []
             if person_value not in self._wisski_persons:
-                missing.append(person_value)
-        return missing
+                missing_values.append(person_value)
+        return missing_values
 
     def update(self):
         if not self.check_missing() == []:
