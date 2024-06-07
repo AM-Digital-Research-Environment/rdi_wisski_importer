@@ -167,10 +167,41 @@ class DocumentEntity:
 class PersonEntity:
 
     def __init__(self, mongo_auth_string):
+
+        # MongoDB
         self._mongo_client = MongoClient(mongo_auth_string)
+
+        # Dictionaries
         self._mongo_list = self._mongo_client['dev']['persons'].distinct('name')
+        self._bundle = json_file("dicts/bundles.json")
+        self._field = json_file("dicts/fields.json")
         self._query = json_file("dicts/sparql_queries.json")
+
+        # WissKi Auth
+        self._api_url = "http://132.180.10.89/wisski/api/v0"
+        self._auth = ("DataManager", "1618931-Multiple-2024")
+        self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
+        self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
+
+        # WissKI Data
         self._wisski_persons = list(entity_uri(search_value="", query_string=self._query.get('personlist'),
                                                return_format='csv', value_input=False))
+
+    def check_missing(self):
+        for person_value in self._mongo_list:
+            missing = []
+            if person_value not in self._wisski_persons:
+                missing.append(person_value)
+        return missing
+
+    def update(self):
+        if not self.check_missing() == []:
+            for person_entity in self.check_missing():
+                person_entity_value = {
+                    self._field.get('f_person_name'): [person_entity]
+                }
+                person_entity_object = Entity(api=self._api, fields=person_entity_value,
+                                              bundle_id=self._bundle.get('g_person'))
+                self._api.save(person_entity_object)
 
 # TODO: Institute Entity Updating Class
