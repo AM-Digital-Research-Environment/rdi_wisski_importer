@@ -209,4 +209,11 @@ class PersonEntity(GeneralEntity):
                                               bundle_id=self._bundle.get('g_person'))
                 self._api.save(person_entity_object)
 
-# TODO: Institute Entity Updating Class
+# Institution Entity Synchronisation
+
+class InstitutionEntity(GeneralEntity):
+
+    def __init__(self):
+
+        # Super class
+        super().__init__()
