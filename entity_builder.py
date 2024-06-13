@@ -177,43 +177,58 @@ class DocumentEntity(GeneralEntity):
 # Person Entity Synchronisation
 
 
-class PersonEntity(GeneralEntity):
+class EntitySync(GeneralEntity):
 
-    def __init__(self, mongo_auth_string):
+    def __init__(self, mongo_auth_string, sycn_field):
+
+        # Field name initialisation
+        self._sync_field_name = sycn_field
 
         # Super Class
         super().__init__()
 
+        # WissKI Query Dict
+        self._wisski_query = {
+            "persons": "personlist",
+            "institutions": "institutionlist"
+        }
+
+        # WissKI Path field Dict
+
+        self._wisski_path_field = {
+            "persons": "f_person_name",
+            "institutions": "f_institution_name",
+        }
+
+        # WissKI Path Group Dict
+
+        self._wisski_path_group = {
+            "persons": "g_person",
+            "institutions": "g_institution"
+        }
+
         # MongoDB
         self._mongo_client = MongoClient(mongo_auth_string)
-        self._mongo_list = self._mongo_client['dev']['persons'].distinct('name')
+        self._mongo_list = self._mongo_client['dev'][self._sync_field_name].distinct('name')
 
         # WissKI Data
-        self._wisski_persons = list(entity_uri(search_value="", query_string=self._query.get('personlist'),
-                                               return_format='csv', value_input=False))
+        self._wisski_entities = list(entity_uri(search_value="",
+                                                query_string=self._query.get(self._wisski_query.get(self._sync_field_name)),
+                                                return_format='csv', value_input=False))
 
     def check_missing(self):
-        for person_value in self._mongo_list:
+        for value in self._mongo_list:
             missing_values = []
-            if person_value not in self._wisski_persons:
-                missing_values.append(person_value)
+            if value not in self._wisski_entities:
+                missing_values.append(value)
         return missing_values
 
     def update(self):
         if not self.check_missing() == []:
-            for person_entity in self.check_missing():
-                person_entity_value = {
-                    self._field.get('f_person_name'): [person_entity]
+            for entity in self.check_missing():
+                entity_value = {
+                    self._field.get(self._wisski_path_field.get(self._sync_field_name)): [entity]
                 }
                 person_entity_object = Entity(api=self._api, fields=person_entity_value,
-                                              bundle_id=self._bundle.get('g_person'))
+                                              bundle_id=self._bundle.get(self._wisski_path_group.get(self._sync_field_name)))
                 self._api.save(person_entity_object)
-
-# Institution Entity Synchronisation
-
-class InstitutionEntity(GeneralEntity):
-
-    def __init__(self):
-
-        # Super class
-        super().__init__()
