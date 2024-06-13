@@ -179,10 +179,10 @@ class DocumentEntity(GeneralEntity):
 
 class EntitySync(GeneralEntity):
 
-    def __init__(self, mongo_auth_string, sycn_field):
+    def __init__(self, mongo_auth_string, sync_field):
 
         # Field name initialisation
-        self._sync_field_name = sycn_field
+        self._sync_field_name = sync_field
 
         # Super Class
         super().__init__()
