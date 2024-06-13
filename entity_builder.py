@@ -213,12 +213,12 @@ class EntitySync(GeneralEntity):
 
         # WissKI Data
         self._wisski_entities = list(entity_uri(search_value="",
-                                                query_string=self._query.get(self._wisski_query.get(self._sync_field_name)),
-                                                return_format='csv', value_input=False))
+                                                query_string=self._query.get(self._wisski_query[self._sync_field_name]),
+                                                return_format='csv', value_input=False).iloc[:,0])
 
     def check_missing(self):
+        missing_values = []
         for value in self._mongo_list:
-            missing_values = []
             if value not in self._wisski_entities:
                 missing_values.append(value)
         return missing_values
