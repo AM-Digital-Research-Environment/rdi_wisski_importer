@@ -229,6 +229,6 @@ class EntitySync(GeneralEntity):
                 entity_value = {
                     self._field.get(self._wisski_path_field.get(self._sync_field_name)): [entity]
                 }
-                person_entity_object = Entity(api=self._api, fields=person_entity_value,
+                entity_object = Entity(api=self._api, fields=entity_value,
                                               bundle_id=self._bundle.get(self._wisski_path_group.get(self._sync_field_name)))
-                self._api.save(person_entity_object)
+                self._api.save(entity_object)
