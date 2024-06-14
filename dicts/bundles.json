@@ -1,4 +1,8 @@
 {
+  "b_authority_tag": "ba12df9592320d0c0d23b50781084a91",
+  "g_audience": "b8f28bfe3f60ff34be84ce0639b6fd76",
+  "g_authority": "b29200adff33177fbd630f8b8bb55c60",
+  "g_authority_role": "bcca8ca49995c14a1b63968e77c54355",
   "g_country": "b1c8a6b3dd95ee518b79f82f91e48d99",
   "g_identifier_name": "bb9a7ff73675b1446b529d3c9a857a7f",
   "g_institution": "bf83724ff7ccb6a7ad9342e9ec9d72bc",
@@ -16,6 +20,7 @@
   "g_research_data_item_identifier": "b0a68ce93c10e4d58f1be69cb8ad0f5c",
   "g_research_data_item_title": "b6e0f000f713c26221561dde8c581679",
   "g_resource_type": "b8b4ebc6d03ae8374cb5914969ef23f7",
+  "g_subject": "b623249e58e7afc55eec48f59ee0d7f3",
   "g_subregion": "beb5d0153069034a6097901efa878950",
   "g_tag": "b94e1a41367b3cf7d4decc639d67fd5e",
   "g_usage_and_copyright": "bde1d77d1d8673e74663a59875f86e2c"
