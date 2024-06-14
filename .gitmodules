@@ -1,3 +1,6 @@
 [submodule "wisski_py"]
 	path = wisski_py
 	url = https://github.com/kaiamann/wisski_py.git
+[submodule "wisskiAPI"]
+	path = wisski_py
+	url = https://github.com/kaiamann/wisski_py.git
