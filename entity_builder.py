@@ -136,6 +136,7 @@ class DocumentEntity(GeneralEntity):
             ]
 
     # Subregion
+    # def subregion
 
 
     # Current Location
