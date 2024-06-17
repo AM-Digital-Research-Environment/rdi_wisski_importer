@@ -135,6 +135,8 @@ class DocumentEntity(GeneralEntity):
                 )
             ]
 
+    # Subregion
+
 
     # Current Location
     # TODO: This section needs to reviewed in pathbuilder before building entity structure
