@@ -221,7 +221,7 @@ class DocumentEntity(GeneralEntity):
     # Associated Person (Mandatory Field)
     def role(self):
         name_entity_list = []
-        for name in self._field.get('name'):
+        for name in self._document.get('name'):
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
@@ -242,8 +242,28 @@ class DocumentEntity(GeneralEntity):
         title_entity_list = []
         for title in self._document.get('titleInfo'):
             title_entity_list.append(
-                Entity()
+                Entity(api=self._api,
+                       fields={
+                           self._field.get('f_research_data_item_title_appel'): title.get('title'),
+                           self._field.get('f_research_data_item_title_type'): title.get('title_type')
+                       }, bundle_id=self._bundle.get('g_research_data_item_title'))
             )
+        self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
+
+    # Dates
+    # TODO: Date information section (created date to entered separately)
+
+    # Technical Description
+    # TODO: Technical Decription and additional information
+
+    # Genre
+    # TODO: Genre Term by Authority (Insert authrority types to system)
+
+    # Subject
+    # TODO: Subjects Values
+
+    # Tags
+    # TODO: Tags Values
 
     # Staged Values
 
@@ -261,6 +281,7 @@ class DocumentEntity(GeneralEntity):
         self.subregion()
         self.currentlocation()
         self.role()
+        self.titles()
         return self._research_data_item
 
 
