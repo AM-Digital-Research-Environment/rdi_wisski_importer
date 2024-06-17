@@ -40,7 +40,7 @@ def entity_uri(search_value: str | dict[str, str],
     sparql.setReturnFormat(format_dict[return_format])
     if value_input:
         if not conditional:
-            sparql.setQuery(query_string.format(search_value))
+            sparql.setQuery(query_string.format(search_value=search_value))
         elif conditional:
             sparql.setQuery(query_string.format(**search_value))
     elif not value_input:
