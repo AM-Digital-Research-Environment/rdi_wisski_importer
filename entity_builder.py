@@ -8,6 +8,7 @@ import pandas as pd
 
 # Data Parsing
 import json
+from urllib.parse import urlparse
 
 # WissKi Api
 from wisski.api import Api, Pathbuilder, Entity
@@ -46,6 +47,9 @@ class DocumentEntity(GeneralEntity):
 
         # BSON Metadata Document
         self._document = bson_doc
+
+        # GeoLoc Information
+        self._origin = self._document.get('location').get('origin')
 
         # Core dictionary for Research Data Items
         self._research_data_item = {
@@ -126,18 +130,39 @@ class DocumentEntity(GeneralEntity):
     # Region (level 2)
     def region(self):
         if not pd.isna(self._origin.get('l2')):
-            self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [
-                entity_uri(
-                    search_value={'level_0': self._origin.get('l2'),
-                                'level_1': self._origin.get('l1')},
-                    query_string='region',
-                    conditional=True
-                )
-            ]
+            region_uri = entity_uri(
+                search_value={'level_0': self._origin.get('l2'),
+                              'level_1': self._origin.get('l1')},
+                query_string=self._query.get('region'),
+                conditional=True)
+            self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
+            return region_uri
+        else:
+            pass
 
     # Subregion
-    # def subregion
-
+    def subregion(self):
+        if not pd.isna(self._origin.get('l3')):
+            subregion = entity_uri(
+                search_value={
+                    'level_0': self._origin.get('l3'),
+                    'level_1': self._origin.get('l2')
+                },
+                query_string=self._query.get('subregion'),
+                conditional=True
+            )
+            if subregion is not None and urlparse(subregion).scheme != '':
+                self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
+            elif subregion is None:
+                self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
+                    Entity(api=self._api,
+                           fields={
+                               self._field.get('f_subregion_name'): [self._origin.get('l3')],
+                               self._field.get('f_subregion_region'): self.region()
+                           }, bundle_id=self._bundle.get('g_subregion'))
+                ]
+            else:
+                pass
 
     # Current Location
     # TODO: This section needs to reviewed in pathbuilder before building entity structure
@@ -198,6 +223,9 @@ class DocumentEntity(GeneralEntity):
         self.target_audience()
         self.abstract()
         self.note()
+        self.country()
+        self.region()
+        self.subregion()
         return self._research_data_item
 
 
