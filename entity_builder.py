@@ -111,6 +111,30 @@ class DocumentEntity(GeneralEntity):
 
     # Geographic Location
     # TODO: This section needs to reviewed in pathbuilder before building entity structure
+    # Country (level 1)
+    def country(self):
+        if not pd.isna(self._origin.get('l1')):
+            self._research_data_item[self._field.get('f_research_data_creat_country')]=[
+                entity_uri(
+                    search_value=self._origin.get('l1'),
+                    query_string=self._query.get('country')
+                )
+            ]
+        else:
+            pass
+
+    # Region (level 2)
+    def region(self):
+        if not pd.isna(self._origin.get('l2')):
+            self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [
+                entity_uri(
+                    search_value={'level_0': self._origin.get('l2'),
+                                'level_1': self._origin.get('l1')},
+                    query_string='region',
+                    conditional=True
+                )
+            ]
+
 
     # Current Location
     # TODO: This section needs to reviewed in pathbuilder before building entity structure
