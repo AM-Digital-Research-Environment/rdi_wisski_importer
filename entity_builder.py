@@ -114,7 +114,6 @@ class DocumentEntity(GeneralEntity):
             pass
 
     # Geographic Location
-    # TODO: This section needs to reviewed in pathbuilder before building entity structure
     # Country (level 1)
     def country(self):
         if not pd.isna(self._origin.get('l1')):
@@ -165,7 +164,11 @@ class DocumentEntity(GeneralEntity):
                 pass
 
     # Current Location
-    # TODO: This section needs to reviewed in pathbuilder before building entity structure
+    def currentlocation(self):
+        if not self._document.get('location').get('current') == []:
+            self._research_data_item[self._field.get('f_research_data_item_located_at')] = self._document.get('location').get('current')
+        else:
+            pass
 
     # URL
     def url_link(self):
@@ -199,13 +202,14 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
 
-    # TODO: No field available on pathbuilder
-    # # Table of Content
-    # def tabel_of_content(self):
-    #     if not self._document.get('tableOfContents') == []:
-    #         self._research_data_item[self._field.get()] = [self._document.get('tableOfContents')]
-    #     else:
-    #         pass
+    # Table of Content
+    def tabel_of_content(self):
+        if not self._document.get('tableOfContents') == []:
+            self._research_data_item[self._field.get('f_research_data_item_toc')] = [
+                self._document.get('tableOfContents')
+            ]
+        else:
+            pass
 
     # Note(s)
     def note(self):
@@ -214,7 +218,35 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
 
+    # Associated Person (Mandatory Field)
+    def role(self):
+        name_entity_list = []
+        for name in self._field.get('name'):
+            name_entity_list.append(
+                Entity(api=self._api,
+                       fields={
+                           self._field.get('f_research_data_item_apers_name'): entity_uri(
+                               search_value=name.get('name'),
+                               query_string=self._query.get('person')
+                           ),
+                           self._field.get('f_research_data_item_apers_role'): entity_uri(
+                               search_value=name.get('role'),
+                               query_string=self._query.get('role')
+                           )
+                       }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
+            )
+        self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
+
+    # Title Information
+    def titles(self):
+        title_entity_list = []
+        for title in self._document.get('titleInfo'):
+            title_entity_list.append(
+                Entity()
+            )
+
     # Staged Values
+
     def staging(self):
         self.langauge()
         self.citation()
@@ -222,10 +254,13 @@ class DocumentEntity(GeneralEntity):
         self.copyright()
         self.target_audience()
         self.abstract()
+        self.tabel_of_content()
         self.note()
         self.country()
         self.region()
         self.subregion()
+        self.currentlocation()
+        self.role()
         return self._research_data_item
 
 
@@ -269,7 +304,7 @@ class EntitySync(GeneralEntity):
         # WissKI Data
         self._wisski_entities = list(entity_uri(search_value="",
                                                 query_string=self._query.get(self._wisski_query[self._sync_field_name]),
-                                                return_format='csv', value_input=False).iloc[:,0])
+                                                return_format='csv', value_input=False).iloc[:, 0])
 
     def check_missing(self):
         missing_values = []
@@ -285,5 +320,5 @@ class EntitySync(GeneralEntity):
                     self._field.get(self._wisski_path_field.get(self._sync_field_name)): [entity]
                 }
                 entity_object = Entity(api=self._api, fields=entity_value,
-                                              bundle_id=self._bundle.get(self._wisski_path_group.get(self._sync_field_name)))
+                                       bundle_id=self._bundle.get(self._wisski_path_group.get(self._sync_field_name)))
                 self._api.save(entity_object)
