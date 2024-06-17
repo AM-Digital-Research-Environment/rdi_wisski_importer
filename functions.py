@@ -68,7 +68,7 @@ def json_file(file_path: str):
             file_obj.close()
 
 # Function for the entity generation of single
-
+# TODO: Exception function as argument incase entity dies not existing the system.
 
 def entity_list_generate(value_list, query_name):
     entity_list = []
@@ -79,3 +79,4 @@ def entity_list_generate(value_list, query_name):
         else:
             entity_list.append(uri_value)
     return entity_list
+
