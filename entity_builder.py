@@ -14,26 +14,9 @@ from urllib.parse import urlparse
 from wisski.api import Api, Pathbuilder, Entity
 
 # Local Functions
-from functions import entity_uri, json_file, entity_list_generate
-
-# General entity management variable class
-
-
-class GeneralEntity:
-
-    def __init__(self):
-
-        # Dictionary Objects
-        self._bundle = json_file("dicts/bundles.json")
-        self._field = json_file("dicts/fields.json")
-        self._query = json_file("dicts/sparql_queries.json")
-        self._language = json_file("dicts/lang.json")
-
-        # WissKI Auth
-        self._api_url = "http://132.180.10.89/wisski/api/v0"
-        self._auth = ("***REMOVED***", "***REMOVED***")
-        self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
-        self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
+from functions import *
+from auth import GeneralEntity
+from exception_functions import fieldfunction
 
 
 # Class for creating the Research Data Item entity
@@ -98,10 +81,12 @@ class DocumentEntity(GeneralEntity):
     # Language
     def langauge(self):
         if not self._document.get('langauge') == []:
-            document_languages = [self._language.get(l) for l in self._document.get('language')]
+            document_languages = [try_func(l, lambda x: self._language.get(x)) for l in self._document.get('language')]
             self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
                 document_languages,
-                self._query.get('language')
+                self._query.get('language'),
+                exception_function=fieldfunction('language').exception,
+                with_exception=True
             )
         else:
             pass
@@ -154,11 +139,9 @@ class DocumentEntity(GeneralEntity):
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
             elif subregion is None:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                    Entity(api=self._api,
-                           fields={
-                               self._field.get('f_subregion_name'): [self._origin.get('l3')],
-                               self._field.get('f_subregion_region'): self.region()
-                           }, bundle_id=self._bundle.get('g_subregion'))
+                    fieldfunction('subregion').exception(entity_value=self._origin.get('l3').get('entity'),
+                                                         qualifier_value=self.region(),
+                                                         with_qualifier=True)
                 ]
             else:
                 pass
@@ -258,6 +241,27 @@ class DocumentEntity(GeneralEntity):
 
     # Genre
     # TODO: Genre Term by Authority (Insert authority types to system)
+    # TODO: Add Genre to query dictionary
+    def genre(self):
+        genre_entities = []
+        genre_terms = self._document.get('genre')
+        for authority in genre_terms.keys():
+            authority_uri = entity_uri(search_value=authority, query_string=self._query.get('identifier'))
+            for term in genre_terms.get(authority):
+                term_uri = entity_uri(search_value={'term': term, 'authority': authority_uri},
+                                      query_string=self._query.get('genre'),
+                                      conditional=True)
+                if term_uri is None:
+                    genre_entities.append(fieldfunction('genre').exception(
+                        entity_value=term,
+                        qualifier_value=authority_uri,
+                        with_qualifier=True
+                    ))
+                elif urlparse(term_uri).scheme != '':
+                    genre_entities.append(term_uri)
+                else:
+                    pass
+            self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
     # Subject
     # TODO: Subjects Values
