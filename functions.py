@@ -70,12 +70,12 @@ def json_file(file_path: str):
 # Function for the entity generation of single
 # TODO: Exception function as argument incase entity dies not existing the system.
 
-def entity_list_generate(value_list, query_name):
+def entity_list_generate(value_list, query_name, exception_function):
     entity_list = []
     for entity_value in value_list:
         uri_value = entity_uri(entity_value, query_name)
         if uri_value is None:
-            entity_list.append(entity_value)
+            entity_list.append(exception_function(entity_value))
         else:
             entity_list.append(uri_value)
     return entity_list

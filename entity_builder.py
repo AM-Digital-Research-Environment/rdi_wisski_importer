@@ -16,7 +16,7 @@ from wisski.api import Api, Pathbuilder, Entity
 # Local Functions
 from functions import entity_uri, json_file, entity_list_generate
 
-# General enitity management variable class
+# General entity management variable class
 
 
 class GeneralEntity:
