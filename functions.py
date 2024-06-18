@@ -8,6 +8,7 @@ Created on Tue May 28 15:17:50 2024
 # Library Imports
 import pandas as pd
 import numpy as np
+from typing import Callable
 from pymongo import MongoClient
 from SPARQLWrapper import SPARQLWrapper, JSON, CSV
 import io
@@ -70,16 +71,25 @@ def json_file(file_path: str):
 # Function for the entity generation of single
 # TODO: Exception function as argument incase entity dies not existing the system.
 
-def entity_list_generate(value_list, query_name, exception_function, with_exception=False):
+
+def entity_list_generate(value_list, query_name, exception_function: Callable, with_exception=False):
     entity_list = []
     for entity_value in value_list:
         uri_value = entity_uri(entity_value, query_name)
         if uri_value is None:
             if with_exception:
-                entity_list.append(exception_function(entity_value))
+                entity_list.append(exception_function(entity_value=entity_value))
             elif not with_exception:
                 entity_list.append(entity_value)
         else:
             entity_list.append(uri_value)
     return entity_list
 
+# Try Function (NameError)
+
+
+def try_func(value, func):
+    try:
+        func(value)
+    except NameError:
+        return value
