@@ -254,10 +254,10 @@ class DocumentEntity(GeneralEntity):
     # TODO: Date information section (created date to entered separately)
 
     # Technical Description
-    # TODO: Technical Decription and additional information
+    # TODO: Technical Description and additional information
 
     # Genre
-    # TODO: Genre Term by Authority (Insert authrority types to system)
+    # TODO: Genre Term by Authority (Insert authority types to system)
 
     # Subject
     # TODO: Subjects Values
