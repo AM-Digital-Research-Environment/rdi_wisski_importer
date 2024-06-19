@@ -69,7 +69,6 @@ def json_file(file_path: str):
             file_obj.close()
 
 # Function for the entity generation of single
-# TODO: Exception function as argument incase entity dies not existing the system.
 
 
 def entity_list_generate(value_list, query_name, exception_function: Callable, with_exception=False):
