@@ -1,5 +1,5 @@
 # Libraries
-
+import numpy as np
 # MongoDB
 from pymongo import MongoClient
 
@@ -8,6 +8,7 @@ import pandas as pd
 
 # Data Parsing
 import json
+from datetime import datetime
 from urllib.parse import urlparse
 
 # WissKi Api
@@ -180,14 +181,14 @@ class DocumentEntity(GeneralEntity):
 
     # Abstract
     def abstract(self):
-        if not self._document.get('url') == []:
+        if not self._document.get('abstract') == [] and pd.isna(self._document.get('abstract')) == False:
             self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
         else:
             pass
 
     # Table of Content
     def tabel_of_content(self):
-        if not self._document.get('tableOfContents') == []:
+        if not self._document.get('tableOfContents') == [] and pd.isna(self._document.get('tableOfContents')) == False:
             self._research_data_item[self._field.get('f_research_data_item_toc')] = [
                 self._document.get('tableOfContents')
             ]
@@ -235,6 +236,32 @@ class DocumentEntity(GeneralEntity):
 
     # Dates
     # TODO: Date information section (created date to entered separately)
+    def dateinfo(self):
+        additional_dates = []
+        for k in self._document.get('dateInfo').keys():
+            if k == 'created':
+                try:
+                    date_value = datetime.strftime(self._document.get('dateInfo').get(k).get('end'))
+                    self._research_data_item[self._field.get('f_research_data_item_create_date')] = [date_value]
+                except TypeError:
+                    pass
+            else:
+                try:
+                    additional_dates.append(
+                        Entity(api=self._api,
+                               fields={
+                                   self._field.get('f_research_data_item_add_date_d'): datetime.strftime(
+                                       self._document.get('dateInfo').get(k).get('end')
+                                   ),
+                                   self._field.get('f_research_data_item_add_date_t'): k
+                               },
+                               bundle_id=self._bundle.get('g_research_data_item_date_add')
+                        )
+                    )
+                except TypeError:
+                    pass
+        self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
+
 
     # Technical Description
     # TODO: Technical Description and additional information
@@ -286,6 +313,7 @@ class DocumentEntity(GeneralEntity):
         self.currentlocation()
         self.role()
         self.titles()
+       # self.genre()
         return self._research_data_item
 
 
