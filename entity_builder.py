@@ -103,7 +103,7 @@ class DocumentEntity(GeneralEntity):
     # Country (level 1)
     def country(self):
         if not pd.isna(self._origin.get('l1')):
-            self._research_data_item[self._field.get('f_research_data_creat_country')]=[
+            self._research_data_item[self._field.get('f_research_data_creat_country')] = [
                 entity_uri(
                     search_value=self._origin.get('l1'),
                     query_string=self._query.get('country')
@@ -150,7 +150,9 @@ class DocumentEntity(GeneralEntity):
     # Current Location
     def currentlocation(self):
         if not self._document.get('location').get('current') == []:
-            self._research_data_item[self._field.get('f_research_data_item_located_at')] = self._document.get('location').get('current')
+            self._research_data_item[
+                self._field.get('f_research_data_item_located_at')
+            ] = self._document.get('location').get('current')
         else:
             pass
 
@@ -181,14 +183,14 @@ class DocumentEntity(GeneralEntity):
 
     # Abstract
     def abstract(self):
-        if not self._document.get('abstract') == [] and pd.isna(self._document.get('abstract')) == False:
+        if not self._document.get('abstract') == [] and pd.isna(self._document.get('abstract')) is False:
             self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
         else:
             pass
 
     # Table of Content
     def tabel_of_content(self):
-        if not self._document.get('tableOfContents') == [] and pd.isna(self._document.get('tableOfContents')) == False:
+        if not self._document.get('tableOfContents') == [] and pd.isna(self._document.get('tableOfContents')) is False:
             self._research_data_item[self._field.get('f_research_data_item_toc')] = [
                 self._document.get('tableOfContents')
             ]
@@ -240,7 +242,7 @@ class DocumentEntity(GeneralEntity):
         for k in self._document.get('dateInfo').keys():
             if k == 'created':
                 try:
-                    date_value = datetime.strftime(self._document.get('dateInfo').get(k).get('end'))
+                    date_value = datetime.strftime(self._document.get('dateInfo').get(k).get('end'), "%d/%m/%Y")
                     self._research_data_item[self._field.get('f_research_data_item_create_date')] = [date_value]
                 except TypeError:
                     pass
@@ -250,23 +252,20 @@ class DocumentEntity(GeneralEntity):
                         Entity(api=self._api,
                                fields={
                                    self._field.get('f_research_data_item_add_date_d'): datetime.strftime(
-                                       self._document.get('dateInfo').get(k).get('end')
-                                   ),
+                                       self._document.get('dateInfo').get(k).get('end'), "%d/%m/%Y"),
                                    self._field.get('f_research_data_item_add_date_t'): k
                                },
-                               bundle_id=self._bundle.get('g_research_data_item_date_add')
-                        )
+                               bundle_id=self._bundle.get('g_research_data_item_date_add'))
                     )
                 except TypeError:
                     pass
         self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
 
-
     # Technical Description
     # TODO: Technical Description and additional information
-
     # Genre
     # TODO: Add Genre to query dictionary
+
     def genre(self):
         genre_entities = []
         genre_terms = self._document.get('genre')
