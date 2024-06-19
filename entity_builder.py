@@ -59,7 +59,8 @@ class DocumentEntity(GeneralEntity):
         # Initialising DRE Identifier
         dreId_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('dre_id')],
-            self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier", self._query.get('identifier'))]
+            self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier",
+                                                                     self._query.get('identifier'))]
         }
         dreId_entity = Entity(api=self._api, fields=dreId_fields,
                               bundle_id=self._bundle['g_research_data_item_identifier'])
@@ -263,16 +264,25 @@ class DocumentEntity(GeneralEntity):
 
     # Technical Description
     # TODO: Technical Description and additional information
+
+
     # Genre
-    # TODO: Add Genre to query dictionary
 
     def genre(self):
+        genre_dict = {
+            'marc': 'Machine-Readable Cataloging',
+            'loc': 'LC Genre',
+            'aat': 'Art & architecture thesaurus online',
+            'tgm2': 'Thesaurus For Graphic Materials',
+            'none': 'No Authority/Uncatalogued Genre'
+        }
         genre_entities = []
         genre_terms = self._document.get('genre')
         for authority in genre_terms.keys():
-            authority_uri = entity_uri(search_value=authority, query_string=self._query.get('identifier'))
+            authority_uri = entity_uri(search_value=genre_dict.get(authority),
+                                       query_string=self._query.get('identifier'))
             for term in genre_terms.get(authority):
-                term_uri = entity_uri(search_value={'term': term, 'authority': authority_uri},
+                term_uri = entity_uri(search_value={'term': term, 'authority': authority_uri.split('data/')[1]},
                                       query_string=self._query.get('genre'),
                                       conditional=True)
                 if term_uri is None:
@@ -288,7 +298,17 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
     # Subject
-    # TODO: Subjects Values
+    def subject(self):
+        if not self._document.get('subject') == []:
+            self._research_data_item[self._field.get('f_research_data_item_subject')] = entity_list_generate(
+                value_list=self._document.get('subject'),
+                query_name=self._query.get('subject'),
+                exception_function=fieldfunction('subject').exception,
+                with_exception=True
+            )
+        else:
+            pass
+
 
     # Tags
     # TODO: Tags Values
