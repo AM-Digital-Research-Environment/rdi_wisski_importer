@@ -200,8 +200,8 @@ class DocumentEntity(GeneralEntity):
 
     # Note(s)
     def note(self):
-        if not self._document.get('url') == []:
-            self._research_data_item[self._field.get('f_research_data_note')] = self._document.get('note')
+        if not self._document.get('note') == [] and pd.isna(self._document.get('note')) is False:
+            self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
         else:
             pass
 
@@ -231,8 +231,8 @@ class DocumentEntity(GeneralEntity):
             title_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_title_appel'): title.get('title'),
-                           self._field.get('f_research_data_item_title_type'): title.get('title_type')
+                           self._field.get('f_research_data_item_title_appel'): [title.get('title')],
+                           self._field.get('f_research_data_item_title_type'): [title.get('title_type')]
                        }, bundle_id=self._bundle.get('g_research_data_item_title'))
             )
         self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
@@ -243,7 +243,9 @@ class DocumentEntity(GeneralEntity):
         for k in self._document.get('dateInfo').keys():
             if k == 'created':
                 try:
-                    date_value = datetime.strftime(self._document.get('dateInfo').get(k).get('end'), "%d/%m/%Y")
+                    date_value = datetime.strftime(
+                        datetime.fromisoformat(self._document.get('dateInfo').get(k).get('end')),
+                        "%d/%m/%Y")
                     self._research_data_item[self._field.get('f_research_data_item_create_date')] = [date_value]
                 except TypeError:
                     pass
@@ -253,14 +255,18 @@ class DocumentEntity(GeneralEntity):
                         Entity(api=self._api,
                                fields={
                                    self._field.get('f_research_data_item_add_date_d'): datetime.strftime(
-                                       self._document.get('dateInfo').get(k).get('end'), "%d/%m/%Y"),
+                                       datetime.fromisoformat(self._document.get('dateInfo').get(k).get('end')),
+                                       "%d/%m/%Y"),
                                    self._field.get('f_research_data_item_add_date_t'): k
                                },
                                bundle_id=self._bundle.get('g_research_data_item_date_add'))
                     )
                 except TypeError:
                     pass
-        self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
+        if additional_dates != []:
+            self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
+        else:
+            pass
 
     # Technical Description
     # TODO: Technical Description and additional information
@@ -330,8 +336,17 @@ class DocumentEntity(GeneralEntity):
         self.currentlocation()
         self.role()
         self.titles()
+        self.dateinfo()
         self.genre()
+        self.subject()
         return self._research_data_item
+
+    def upload(self):
+        self._api.save(Entity(
+            api=self._api,
+            fields=self.staging(),
+            bundle_id=self._bundle.get('g_research_data_item')
+        ))
 
 
 # Person Entity Synchronisation
