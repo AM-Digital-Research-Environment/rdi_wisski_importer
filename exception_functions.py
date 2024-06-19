@@ -17,7 +17,6 @@ class fieldfunction(GeneralEntity):
         super().__init__()
 
         # Field Dictionary
-        # TODO: Add Subject to Dict
         self._path_dict = {
             'language': {
                 'bundle': self._bundle.get('g_iso_language'),
@@ -32,6 +31,10 @@ class fieldfunction(GeneralEntity):
                 'bundle': self._bundle.get('b_authority_tag'),
                 'field': self._field.get('f_auth_tag_tag'),
                 'qualifier': self._field.get('f_auth_tag_source')
+            },
+            'subject': {
+                'bundle': self._bundle.get('g_subject'),
+                'field': self._field.get('f_subject_tag')
             }
         }
 
