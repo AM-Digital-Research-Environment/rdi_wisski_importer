@@ -235,7 +235,6 @@ class DocumentEntity(GeneralEntity):
         self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
 
     # Dates
-    # TODO: Date information section (created date to entered separately)
     def dateinfo(self):
         additional_dates = []
         for k in self._document.get('dateInfo').keys():
@@ -267,7 +266,6 @@ class DocumentEntity(GeneralEntity):
     # TODO: Technical Description and additional information
 
     # Genre
-    # TODO: Genre Term by Authority (Insert authority types to system)
     # TODO: Add Genre to query dictionary
     def genre(self):
         genre_entities = []
@@ -313,7 +311,7 @@ class DocumentEntity(GeneralEntity):
         self.currentlocation()
         self.role()
         self.titles()
-       # self.genre()
+        self.genre()
         return self._research_data_item
 
 
