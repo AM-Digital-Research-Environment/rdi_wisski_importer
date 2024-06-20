@@ -17,10 +17,10 @@ def pathbuilder_save(xml_file_name):
             fields[path.find('id').text] = path.find('field').text
 
     # Generating json files
-    with open('dicts\\bundles.json', 'w') as bfile:
+    with open('dicts/bundles.json', 'w') as bfile:
         json.dump(bundles, bfile)
 
-    with open('dicts\\fields.json', 'w') as ffile:
+    with open('dicts/fields.json', 'w') as ffile:
         json.dump(fields, ffile)
 
     return "Success!"
