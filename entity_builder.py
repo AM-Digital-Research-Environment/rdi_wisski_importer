@@ -269,8 +269,33 @@ class DocumentEntity(GeneralEntity):
             pass
 
     # Technical Description
-    # TODO: Technical Description and additional information
 
+    def physicaldesc(self):
+        pd_dict = self._document.get('physicalDescription')
+        # Type (Mandatory Field)
+        self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = [
+            self._document.get('physicalDescription').get('type')
+        ]
+        # Method
+        if not pd.isna(pd_dict.get('method')):
+            self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = [pd_dict.get('method')]
+        else:
+            pass
+        # Description
+        if pd_dict.get('desc') is not []:
+            self._research_data_item[self._field.get('f_reseach_data_item_res_t_desc')] = pd_dict.get('desc')
+        else:
+            pass
+        # Technical Property
+        if pd_dict.get('tech') is not []:
+            self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = pd_dict.get('tech')
+        else:
+            pass
+        # Technical Description Note
+        if pd_dict.get('note') is not []:
+            self._research_data_item[self._field.get('f_reseach_data_item_res_t_descr')] = pd_dict.get('note')
+        else:
+            pass
 
     # Genre
 
