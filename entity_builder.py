@@ -141,7 +141,7 @@ class DocumentEntity(GeneralEntity):
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
             elif subregion is None:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                    fieldfunction('subregion').exception(entity_value=self._origin.get('l3').get('entity'),
+                    fieldfunction('subregion').exception(entity_value=self._origin.get('l3'),
                                                          qualifier_value=self.region(),
                                                          with_qualifier=True)
                 ]
@@ -282,17 +282,17 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
         # Description
-        if pd_dict.get('desc') is not []:
+        if not len(pd_dict.get('desc')) == 0:
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_desc')] = pd_dict.get('desc')
         else:
             pass
         # Technical Property
-        if pd_dict.get('tech') is not []:
+        if not len(pd_dict.get('tech')) == 0:
             self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = pd_dict.get('tech')
         else:
             pass
         # Technical Description Note
-        if pd_dict.get('note') is not []:
+        if not len(pd_dict.get('note')) == 0:
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_descr')] = pd_dict.get('note')
         else:
             pass
@@ -330,7 +330,7 @@ class DocumentEntity(GeneralEntity):
 
     # Subject
     def subject(self):
-        if not self._document.get('subject') == []:
+        if not len(self._document.get('subject')) == 0:
             self._research_data_item[self._field.get('f_research_data_item_subject')] = entity_list_generate(
                 value_list=self._document.get('subject'),
                 query_name=self._query.get('subject'),
@@ -340,9 +340,18 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
 
-
     # Tags
     # TODO: Tags Values
+    def tags(self):
+        if not len(self._document.get('tags')) == 0:
+            self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
+                value_list=self._document.get('tags'),
+                query_name=self._query.get('tags'),
+                exception_function=fieldfunction('tags').exception,
+                with_exception=True
+            )
+        else:
+            pass
 
     # Staged Values
 
@@ -364,6 +373,7 @@ class DocumentEntity(GeneralEntity):
         self.dateinfo()
         self.genre()
         self.subject()
+        self.physicaldesc()
         return self._research_data_item
 
     def upload(self):
