@@ -374,6 +374,7 @@ class DocumentEntity(GeneralEntity):
         self.genre()
         self.subject()
         self.physicaldesc()
+        self.tags()
         return self._research_data_item
 
     def upload(self):
