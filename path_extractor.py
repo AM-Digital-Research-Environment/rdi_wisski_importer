@@ -22,3 +22,5 @@ def pathbuilder_save(xml_file_name):
 
     with open('dicts\\fields.json', 'w') as ffile:
         json.dump(fields, ffile)
+
+    return "Success!"
