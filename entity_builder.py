@@ -368,7 +368,7 @@ class DocumentEntity(GeneralEntity):
         self.region()
         self.subregion()
         self.currentlocation()
-        self.role()
+        #self.role()
         self.titles()
         self.dateinfo()
         self.genre()

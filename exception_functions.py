@@ -37,8 +37,8 @@ class fieldfunction(GeneralEntity):
                 'field': self._field.get('f_subject_tag')
             },
             'tags': {
-                'bundle': self._bundle.get('f_tag_name'),
-                'field': self._field.get('g_tag')
+                'bundle': self._bundle.get('g_tag'),
+                'field': self._field.get('f_tag_name')
             }
         }
 
