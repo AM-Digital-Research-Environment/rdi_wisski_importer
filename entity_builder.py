@@ -45,9 +45,6 @@ class DocumentEntity(GeneralEntity):
             # Field for Identifiers (Mandatory Field)
             self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
 
-            # Sponsorship (Mandatory Field)
-            self._field.get('f_research_data_item_sponsor'): self._document.get('sponsor'),
-
             # Project (Mandatory Field)
             self._field.get('f_research_data_item_project'): [
                 entity_uri(self._document.get('project')['id'], self._query.get('projectid'))]
@@ -209,18 +206,35 @@ class DocumentEntity(GeneralEntity):
     # TODO: Sort out pathbuilder config for this bundle
     def role(self):
         name_entity_list = []
+
+        # Sponsor (Associated Group) (mandatory field)
+        for funder in self._document.get('sponsor'):
+            name_entity_list.append(
+                Entity(api=self._api,
+                       fields={
+                           self._field.get('f_research_data_item_sponsor'): [entity_uri(
+                               search_value=funder,
+                               query_string=self._query.get('sponsor')
+                           )],
+                           self._field.get('f_research_data_item_apers_role'): [entity_uri(
+                               search_value='Sponsor',
+                               query_string=self._query.get('role')
+                           )]
+                       }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
+            )
+
         for name in self._document.get('name'):
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_role_holder'): entity_uri(
+                           self._field.get('f_research_data_item_role_holder'): [entity_uri(
                                search_value=name.get('name'),
                                query_string=self._query.get('person')
-                           ),
-                           self._field.get('f_research_data_item_apers_role'): entity_uri(
+                           )],
+                           self._field.get('f_research_data_item_apers_role'): [entity_uri(
                                search_value=name.get('role'),
                                query_string=self._query.get('role')
-                           )
+                           )]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
         self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
