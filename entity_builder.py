@@ -203,7 +203,6 @@ class DocumentEntity(GeneralEntity):
             pass
 
     # Associated Person (Mandatory Field)
-    # TODO: Sort out pathbuilder config for this bundle
     def role(self):
         name_entity_list = []
 
