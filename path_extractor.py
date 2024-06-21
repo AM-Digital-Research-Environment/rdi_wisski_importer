@@ -18,9 +18,9 @@ def pathbuilder_save(xml_file_name):
 
     # Generating json files
     with open('dicts/bundles.json', 'w') as bfile:
-        json.dump(bundles, bfile)
+        json.dump(bundles, bfile, indent=2)
 
     with open('dicts/fields.json', 'w') as ffile:
-        json.dump(fields, ffile)
+        json.dump(fields, ffile, indent=2)
 
     return "Success!"

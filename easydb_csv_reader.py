@@ -24,13 +24,26 @@ def main(args):
     n_fields = len(easydb.fieldnames)
     
     # 1. create persons
+    persons = set()
+    for row in easydb:
+      assert(len(row.keys()) == n_fields)
+      p = row['creator#_standard#de-DE']
+      if p != '':
+        persons.add(p)
+    print(persons)
+    
+    EntitySync('persons', list(persons)).update()
+    EntitySync('institutions', ['Collections@UBT']).update()
     
     
-    
+    return
+    _csv.seek(0) # reset file pointer, re-iterater over the file
+    next(easydb) # skip header
     for row in easydb:
       assert(len(row.keys()) == n_fields)
       ent = EasydbEntity(row)
       print(ent.staging())
+      break
 
 
 def get_log_filename(out_dir, base, ext='.log'):

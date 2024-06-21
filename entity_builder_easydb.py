@@ -42,11 +42,6 @@ class EasydbEntity(GeneralEntity):
         
         print(self._research_data_item)
 
-        if not self._document.get('object_type#_global_object_id') == '2@3c910145-7057-4112-9484-5d30f968f4d0':
-            # Type of Resource (Mandatory Field)
-            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [
-                entity_uri("Image", self._query.get('typeofresource'))]
-        
         # Project (Mandatory Field)
         if not self._document.get('context_funding#_standard#de-DE') == '':
             self._research_data_item[self._field.get('f_research_data_item_project')] = [
@@ -152,52 +147,9 @@ class EasydbEntity(GeneralEntity):
                                                      with_qualifier=True)
                 ]
 
-    # Current Location
-    def currentlocation(self):
-        if not self._document.get('location').get('current') == []:
-            self._research_data_item[
-                self._field.get('f_research_data_item_located_at')
-            ] = self._document.get('location').get('current')
-        else:
-            pass
-
     # URL
     def url_link(self):
         self._research_data_item[self._field.get('f_research_data_item_url')] = 'https://collections.uni-bayreuth.de/#/detail/' + self._document.get('_global_object_id')
-
-    # Copyright
-    def copyright(self):
-        if not self._document.get('accessCondition')['rights'] == []:
-            self._research_data_item[self._field.get('f_research_data_item_copyright')] = entity_list_generate(
-                self._document.get('accessCondition')['rights'],
-                self._query.get('license')
-            )
-        else:
-            pass
-
-    # Target Audience
-    def target_audience(self):
-        if not self._document.get('targetAudience') == []:
-            self._research_data_item[self._field.get('f_research_data_target_audience')] = self._document.get(
-                "targetAudience")
-        else:
-            pass
-
-    # Abstract
-    def abstract(self):
-        if not self._document.get('abstract') == [] and pd.isna(self._document.get('abstract')) is False:
-            self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
-        else:
-            pass
-
-    # Table of Content
-    def tabel_of_content(self):
-        if not self._document.get('tableOfContents') == [] and pd.isna(self._document.get('tableOfContents')) is False:
-            self._research_data_item[self._field.get('f_research_data_item_toc')] = [
-                self._document.get('tableOfContents')
-            ]
-        else:
-            pass
 
     # Note(s)
     def note(self):
@@ -270,6 +222,8 @@ class EasydbEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = ["born digital"]
             # Description
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_desc')] = ['digital images','Digital Photography',]
+            # Type of Resource (Mandatory Field)
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Image", self._query.get('typeofresource'))]
         elif '35mm' in recorder or 'kodachrome' in recorder or 'film' in recorder:
             # Type (Mandatory Field)
             self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = ["Digital"]
@@ -277,6 +231,22 @@ class EasydbEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = ["digitized microfilm"]
             # Description
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_desc')] = ['digital images','Digital Photography',]
+            # Type of Resource (Mandatory Field)
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Image", self._query.get('typeofresource'))]
+        elif 'cassette' in recorder or 'kassette' in recorder or 'mp3' in self._document.get('format').lower() or self._document.get('file#0#url').endswith('mp3'):
+            # Type (Mandatory Field)
+            self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = ["Digital"]
+            # Method
+            self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = ["digitized other analog"]
+            # Type of Resource (Mandatory Field)
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Audio", self._query.get('typeofresource'))]
+        elif self._document.get('file#0#url').endswith('pdf'):
+            # Type (Mandatory Field)
+            self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = ["Digital"]
+            # Method
+            self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = ["digitized other analog"]
+            # Type of Resource (Mandatory Field)
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Text", self._query.get('typeofresource'))]
             
         # Technical Property
         self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = self._document.get('colourbw')
@@ -304,34 +274,32 @@ class EasydbEntity(GeneralEntity):
     # Tags
     # TODO: Tags Values
     def tags(self):
+        values = []
         if not self._document.get('keywords[].keyword#de-DE') == '':
-            values = self._document.get('keywords[].keyword#de-DE').split('\n')
+            values.extend(self._document.get('keywords[].keyword#de-DE').split('\n'))
+        if not self._document.get('keywords_gnd[].keyword_gnd#_standard') == '':
+            values.extend(self._document.get('keywords_gnd[].keyword_gnd#_standard').split('\n'))
+        if not self._document.get('keywords_aat[].keyword_aat#_standard') == '':
+            values.extend(self._document.get('keywords_aat[].keyword_aat#_standard').split('\n'))
+        if len(values) > 0:
             self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
                 value_list=values,
                 query_name=self._query.get('tags'),
                 exception_function=fieldfunction('tags').exception,
                 with_exception=True
             )
-        else:
-            pass
 
     # Staged Values
 
     def staging(self):
-        # ~ self.langauge()
         self.citation()
         self.url_link()
-        # ~ self.copyright()
-        # ~ self.target_audience()
-        # ~ self.abstract()
-        # ~ self.tabel_of_content()
         self.note()
         self.genre()
         self.country()
         self.region()
         self.subregion()
         self.place()
-        # ~ self.currentlocation()
         # ~ #self.role()
         self.titles()
         self.dateinfo()
@@ -352,10 +320,11 @@ class EasydbEntity(GeneralEntity):
 
 class EntitySync(GeneralEntity):
 
-    def __init__(self, mongo_auth_string, sync_field):
+    def __init__(self, sync_field, check_list):
 
         # Field name initialisation
         self._sync_field_name = sync_field
+        self._list = check_list
 
         # Super Class
         super().__init__()
@@ -380,10 +349,6 @@ class EntitySync(GeneralEntity):
             "institutions": "g_institution"
         }
 
-        # MongoDB
-        self._mongo_client = MongoClient(mongo_auth_string)
-        self._mongo_list = self._mongo_client['dev'][self._sync_field_name].distinct('name')
-
         # WissKI Data
         self._wisski_entities = list(entity_uri(search_value="",
                                                 query_string=self._query.get(self._wisski_query[self._sync_field_name]),
@@ -391,14 +356,15 @@ class EntitySync(GeneralEntity):
 
     def check_missing(self):
         missing_values = []
-        for value in self._mongo_list:
+        for value in self._list:
             if value not in self._wisski_entities:
                 missing_values.append(value)
         return missing_values
 
     def update(self):
-        if not self.check_missing() == []:
-            for entity in self.check_missing():
+        missing = self.check_missing()
+        if not missing == []:
+            for entity in missing:
                 entity_value = {
                     self._field.get(self._wisski_path_field.get(self._sync_field_name)): [entity]
                 }

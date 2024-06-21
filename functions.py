@@ -9,20 +9,10 @@ Created on Tue May 28 15:17:50 2024
 import pandas as pd
 import numpy as np
 from typing import Callable
-from pymongo import MongoClient
 from SPARQLWrapper import SPARQLWrapper, JSON, CSV
 import io
 import json
 
-
-# Function for fetching all documents belong to a DB and Collection
-
-
-def mongodata_fetch(db_name, collection_name):
-    client = MongoClient("***REMOVED***")
-    db = client[db_name]
-    collection = db[collection_name]
-    return list(collection.find())
 
 
 # Function for the entity retrieval

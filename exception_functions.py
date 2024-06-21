@@ -22,6 +22,11 @@ class fieldfunction(GeneralEntity):
                 'bundle': self._bundle.get('g_iso_language'),
                 'field': self._field.get('f_iso_language_identifier')
             },
+            'place': {
+                'bundle': self._bundle.get('g_place'),
+                'field': self._field.get('f_place_name'),
+                'qualifier': self._field.get('g_place_in_country')
+            },
             'subregion': {
                 'bundle': self._bundle.get('g_subregion'),
                 'field': self._field.get('f_subregion_name'),
