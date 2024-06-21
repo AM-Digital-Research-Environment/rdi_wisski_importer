@@ -206,13 +206,14 @@ class DocumentEntity(GeneralEntity):
             pass
 
     # Associated Person (Mandatory Field)
+    # TODO: Sort out pathbuilder config for this bundle
     def role(self):
         name_entity_list = []
         for name in self._document.get('name'):
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_apers_name'): entity_uri(
+                           self._field.get('f_research_data_item_role_holder'): entity_uri(
                                search_value=name.get('name'),
                                query_string=self._query.get('person')
                            ),
@@ -368,7 +369,7 @@ class DocumentEntity(GeneralEntity):
         self.region()
         self.subregion()
         self.currentlocation()
-        #self.role()
+        self.role()
         self.titles()
         self.dateinfo()
         self.genre()
