@@ -39,6 +39,10 @@ class fieldfunction(GeneralEntity):
             'tags': {
                 'bundle': self._bundle.get('g_tag'),
                 'field': self._field.get('f_tag_name')
+            },
+            'sponsor': {
+                'bundle': self._bundle.get('g_funding_body'),
+                'field': self._field.get('f_funding_body_name')
             }
         }
 
