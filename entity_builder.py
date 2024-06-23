@@ -205,20 +205,21 @@ class DocumentEntity(GeneralEntity):
     # Associated Person (Mandatory Field)
     def role(self):
         name_entity_list = []
+        sponsor_role = entity_uri(search_value='Sponsor', query_string=self._query.get('role'))
 
         # Sponsor (Associated Group) (mandatory field)
+        # Fetches sponsor uri/creates Entity object in case of exception
         for funder in self._document.get('sponsor'):
+            sponsor_value = entity_uri(search_value=funder, query_string=self._query.get('sponsor'))
+            if sponsor_value is None:
+                sponsor_value = fieldfunction('sponsor').exception(funder)
+            else:
+                pass
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_sponsor'): [entity_uri(
-                               search_value=funder,
-                               query_string=self._query.get('sponsor')
-                           )],
-                           self._field.get('f_research_data_item_apers_role'): [entity_uri(
-                               search_value='Sponsor',
-                               query_string=self._query.get('role')
-                           )]
+                           self._field.get('f_research_data_item_sponsor'): [sponsor_value],
+                           self._field.get('f_research_data_item_apers_role'): [sponsor_role]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
 
