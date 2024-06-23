@@ -5,7 +5,6 @@ from pathlib import Path
 import os.path
 import pandas as pd
 
-import copy
 import json
 import csv
 from entity_builder_easydb import *
@@ -21,66 +20,47 @@ def main(args):
   print(f"updating field ids from {filename}")
   pathbuilder_save(Path(filename).resolve())
   
-  # ~ return
-  with open(args.csv[0], 'r') as _csv:
-    easydb = csv.DictReader(_csv, delimiter=';', quotechar='"')
-    n_fields = len(easydb.fieldnames)
-    
-    # 1. create persons
-    persons = set()
-    projects = set()
-    for row in easydb:
-      assert(len(row.keys()) == n_fields)
-      p = row['creator#_standard#de-DE']
-      if p != '':
-        persons.add(p)
-      p = row['context_funding#_standard#de-DE']
-      if p != '':
-        projects.add(p)
-    
-    es = EntitySync('persons', list(persons))
-    es.update()
-    api = es.get_api()
-    known_entities = es.get_known_entities()
-    es = EntitySync('projects', list(projects), api, known_entities)
-    es.update()
-    known_entities = es.get_known_entities()
-    EntitySync('institutions', ['Collections@UBT'], api, known_entities)
-    es.update()
-    known_entities = es.get_known_entities()
-    EntitySync('identifiers', ['Collections@UBT Identifier', 'Collections@UBT Inventory Number'], api, known_entities)
-    es.update()
-    known_entities = es.get_known_entities()
-    
-    # add project
-    
-    _csv.seek(0) # reset file pointer, re-iterater over the file
-    next(easydb) # skip header
-    errors = {}
-    success = 0
-    for i,row in enumerate(easydb):
-      assert(len(row.keys()) == n_fields)
-      ent = EasydbEntity(row, api, known_entities)
-      known_entities = ent.get_known_entities()
-      # ~ print(known_entities)
-      # ~ print(ent.staging())
-      # ~ print(json.dumps(ent.staging(), indent=2))
-      try:
-        ent.upload()
-        success += 1
-        print("successfully written",i+1)
-      except:
-        errors[str(i)] = row
-        print("error in row",i+1)
-      if i == 3:
-        break
-    
-    with open('ERRORS.json', 'w') as out:
-      out.write(json.dumps(errors))
-    
-    print(f"errors: {len(errors)}\tsuccess: {success}")
-    
-
+  authoritynames = set()
+  authorities = []
+  authorityrolenames = set()
+  authoritiy_roles = []
+  
+  MARC_roles = set()
+  with open(args.marc_role_file, 'r') as _marc_f:
+    _marc_f.readline()
+    for line in _marc_f:
+      MARC_roles.add((line.split('\t')[1]).strip())
+  
+  with open(args.authority_file, 'r') as _auth_f:
+    _auth_f.readline()
+    for line in _auth_f:
+      line = line.split('\t')
+      name = (line[0]).strip()
+      if name in authoritynames:
+        continue
+      authoritynames.add(name)
+      authorities.append({'f_authority_name': name, 'f_authority_url': (line[1]).strip()})
+ 
+  es = EntitySync('identifiers', list(authoritynames))
+  es.update_multiple_values(authorities, 'f_authority_name')
+  
+  marc_uri = es.entity_uri(search_value='Machine-Readable Cataloging', query_id='identifier')
+  with open(args.authority_role_file, 'r') as _authr_f:
+    _authr_f.readline()
+    for line in _authr_f:
+      line = line.split('\t')[0]
+      role = (line[0]).strip()
+      if name in authorityrolenames:
+        continue
+      authorityrolenames.add(role)
+      if role in MARC_roles:
+        authoritiy_roles.append({'f_authority_role_name': role, 'f_authority_role_source': marc_uri})
+      else
+        authoritiy_roles.append({'f_authority_role_name': role})
+  
+  EntitySync('authorityroles', list(authorityrolenames)).update_multiple_values(authoritiy_roles, 'f_authority_role_name')
+  
+  
 
 def get_log_filename(out_dir, base, ext='.log'):
   def get_basename(log_id, base, ext='.log'):
@@ -143,10 +123,22 @@ if __name__ == '__main__':
     nargs='?', 
     default='logs',
     help='choose logging directory')
-    
+                      
   parser.add_argument(
-    'csv', 
-    help='csv',nargs=argparse.REMAINDER)
+    '--authority_file', 
+    help='Authorities')
+                      
+  parser.add_argument(
+    '--authority_role_file', 
+    help='Authority-defined Roles')
+                      
+  parser.add_argument(
+    '--marc_role_file', 
+    help='MARC-defined Roles')
+    
+  # ~ parser.add_argument(
+    # ~ 'csv', 
+    # ~ help='csv',nargs=argparse.REMAINDER)
                       
   args = parser.parse_args()
   configure_logging(args, BASE)

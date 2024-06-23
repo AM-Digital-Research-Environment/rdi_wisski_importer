@@ -50,10 +50,8 @@
   "f_marc_genre_term_tag": "fbf685fbd3fa9ff7f15bf87ed7618134",
   "f_iso_language_identifier": "f31de676c78355ed4502ac1bea494bfb",
   "f_tag_name": "f657dd27423ccf46392f209528764eab",
-  "f_loc_relator_keyword": "f7cf1d7a52c7d70760bdd344413bec72",
   "f_loc_type_of_resource_keyword": "f24c0672ab45eed8f1dbc1056d6933db",
   "g_usage_and_copyright_license": "f94c7f977162542efe31599cf2f136f6",
-  "f_identifier_name": "fc8675d38ffcfe14d3010347b6af2840",
   "f_institution_name": "fccf96680173f6c456314a8f6f45f00e",
   "license_code": "fc19905f025dd590ccd4ecd5a4ee2316",
   "license_url": "f9d239d7b42a4a7188c930355058b35b",
@@ -81,5 +79,7 @@
   "f_group_name": "f483da95e544b792ed7e86ea096aa630",
   "f_research_data_item_role_hldr_g": "ff99f4e4c061a3b76108b3093481ff0d",
   "f_funding_body_name": "f554dbc88a12d79f4369ce0207218171",
-  "f_research_data_item_role_hldr_i": "f53e96fce650856007756c71fa69d708"
+  "f_research_data_item_role_hldr_i": "f53e96fce650856007756c71fa69d708",
+  "f_loc_relator_keyword": "f7cf1d7a52c7d70760bdd344413bec72",
+  "f_identifier_name": "fc8675d38ffcfe14d3010347b6af2840"
 }

@@ -59,6 +59,7 @@ class DocumentEntity(GeneralEntity):
             self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier",
                                                                      self._query.get('identifier'))]
         }
+        
         dreId_entity = Entity(api=self._api, fields=dreId_fields,
                               bundle_id=self._bundle['g_research_data_item_identifier'])
 

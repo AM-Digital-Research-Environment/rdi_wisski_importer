@@ -14,7 +14,7 @@ import re
 from wisski.api import Api, Pathbuilder, Entity
 
 # Local Functions
-from functions import *
+import functions
 from auth import GeneralEntity
 from exception_functions import fieldfunction
 
@@ -23,9 +23,11 @@ from exception_functions import fieldfunction
 
 class EasydbEntity(GeneralEntity):
 
-    def __init__(self, entry_dict):
+    def __init__(self, entry_dict, api=None, known_entities=None):
         # Super class
-        super().__init__()
+        super().__init__(api, known_entities)
+        
+        self.entity_lookups = {}
 
         # Metadata Document
         self._document = entry_dict
@@ -40,21 +42,18 @@ class EasydbEntity(GeneralEntity):
             self._bundle.get('g_research_data_item_identifier'): self.identifier_entities()
         }
         
-        print(self._research_data_item)
-
         # Project (Mandatory Field)
-        if not self._document.get('context_funding#_standard#de-DE') == '':
+        if self._document.get('context_funding#_standard#de-DE') != '':
             self._research_data_item[self._field.get('f_research_data_item_project')] = [
-                entity_uri(self._document.get('context_funding#_standard#de-DE'), self._query.get('projectid'))]
+                self.entity_uri(self._document.get('context_funding#_standard#de-DE'), 'projectname')]
+    
     # Entity list of identifiers
 
     def identifier_entities(self):
-
         # Initialising easydb Identifier
         easydb_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('_global_object_id')],
-            self._field['f_research_data_item_id_type']: [entity_uri("easydb Identifier",
-                                                                     self._query.get('identifier'))]
+            self._field['f_research_data_item_id_type']: [self.entity_uri("Collections@UBT Identifier",'identifier')]
         }
         easydb_entity = Entity(api=self._api, fields=easydb_fields,
                               bundle_id=self._bundle['g_research_data_item_identifier'])
@@ -62,35 +61,33 @@ class EasydbEntity(GeneralEntity):
         # Initialising inventory Identifier
         inventory_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('registrationnumber')],
-            self._field['f_research_data_item_id_type']: [entity_uri("easydb Inventory Number",
-                                                                     self._query.get('identifier'))]
+            self._field['f_research_data_item_id_type']: [self.entity_uri("Collections@UBT Inventory Number",'identifier')]
         }
         inventory_entity = Entity(api=self._api, fields=inventory_fields,
                               bundle_id=self._bundle['g_research_data_item_identifier'])
-
         return [easydb_entity,inventory_entity]
 
     # Citation
     def citation(self):
         if not self._document.get('exploitationrights[].otherlicences') == '':
-            self._research_data_item[self._field.get('f_research_data_item_citation')] = self._document.get('exploitationrights[].otherlicences')
+            self._research_data_item[self._field.get('f_research_data_item_citation')] = [self._document.get('exploitationrights[].otherlicences')]
 
     # Geographic Location
     def country(self):
         if not self._document.get('placeoforigin_geographical#_standard#en-US#0') == '':
             self._research_data_item[self._field.get('f_research_data_creat_country')] = [
-                entity_uri(
+                self.entity_uri(
                     search_value=self._document.get('placeoforigin_geographical#_standard#en-US#0'),
-                    query_string=self._query.get('country')
+                    query_id='country'
                 )
             ]
 
     def get_region_uri(self):
-        if not self._document.get('placeoforigin_geographical#_standard#en-US#1') == '':
-            region_uri = entity_uri(
-                    search_value={'level_0': self._document.get('placeoforigin_geographical#_standard#en-US#0'),
-                                  'level_1': self._document.get('placeoforigin_geographical#_standard#en-US#1')},
-                    query_string=self._query.get('region'),
+        if self._document.get('placeoforigin_geographical#_standard#en-US#1') != '':
+            region_uri = self.entity_uri(
+                    search_value={'level_1': self._document.get('placeoforigin_geographical#_standard#en-US#0').strip(),
+                                  'level_0': self._document.get('placeoforigin_geographical#_standard#en-US#1').strip()},
+                    query_id='region',
                     conditional = True
                 )
             return region_uri
@@ -98,20 +95,20 @@ class EasydbEntity(GeneralEntity):
 
     # Region (level 2)
     def region(self):
-        if not self._document.get('placeoforigin_geographical#_standard#en-US#1') == '':
+        if self._document.get('placeoforigin_geographical#_standard#en-US#1') != '':
             region_uri = self.get_region_uri()
-            if region_uri != False:
+            if region_uri is not None and region_uri != False:
                 self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
 
     # Subregion
     def subregion(self):
         if not self._document.get('placeoforigin_geographical#_standard#en-US#2') == '' and not self._document.get('placeoforigin_geographical#_standard#en-US#1') == '':
-            subregion = entity_uri(
+            subregion = self.entity_uri(
                 search_value={
                     'level_0': self._document.get('placeoforigin_geographical#_standard#en-US#2'),
                     'level_1': self._document.get('placeoforigin_geographical#_standard#en-US#1')
                 },
-                query_string=self._query.get('subregion'),
+                query_id='subregion',
                 conditional=True
             )
             if subregion is not None and urlparse(subregion).scheme != '':
@@ -126,20 +123,20 @@ class EasydbEntity(GeneralEntity):
     def place(self):
         if not self._document.get('placeoforigin_details') == '':
             place_str = re.sub(r"^\W+", "", self._document.get('placeoforigin_details'))
-            place = entity_uri(
+            place = self.entity_uri(
                 search_value={
                     'level_0': place_str,
                     'level_1': self._document.get('placeoforigin_geographical#_standard#en-US#0')
                 },
-                query_string=self._query.get('place'),
+                query_id='place',
                 conditional=True
             )
             if place is not None and urlparse(place).scheme != '':
                 self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [place]
             elif place is None:
-                country_uri = entity_uri(
+                country_uri = self.entity_uri(
                     search_value=self._document.get('placeoforigin_geographical#_standard#en-US#0'),
-                    query_string=self._query.get('country')
+                    query_id='country'
                 )
                 self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [
                     fieldfunction('place').exception(entity_value=place_str,
@@ -149,59 +146,77 @@ class EasydbEntity(GeneralEntity):
 
     # URL
     def url_link(self):
-        self._research_data_item[self._field.get('f_research_data_item_url')] = 'https://collections.uni-bayreuth.de/#/detail/' + self._document.get('_global_object_id')
+        self._research_data_item[self._field.get('f_research_data_item_url')] = ['https://collections.uni-bayreuth.de/#/detail/' + self._document.get('_global_object_id')]
 
     # Note(s)
     def note(self):
         if not self._document.get('description_simple') == '':
             self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('description_simple')]
-        else:
-            pass
 
     # Associated Person (Mandatory Field)
     def role(self):
         name_entity_list = []
-        for name in self._document.get('name'):
+        name_entity_list.append(
+            Entity(api=self._api,
+                   fields={
+                       self._field.get('f_research_data_item_role_hldr_i'): [self.entity_uri(
+                           search_value='Collections@UBT',
+                           query_id='institution'
+                       )],
+                       self._field.get('f_research_data_item_apers_role'): [self.entity_uri(
+                           search_value='Publisher',
+                           query_id='role'
+                       )]
+                   }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
+        )
+        if self._document.get('creator#_standard#de-DE') != '':
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_apers_name'): entity_uri(
-                               search_value=name.get('name'),
-                               query_string=self._query.get('person')
-                           ),
-                           self._field.get('f_research_data_item_apers_role'): entity_uri(
-                               search_value=name.get('role'),
-                               query_string=self._query.get('role')
-                           )
+                           self._field.get('f_research_data_item_role_hldr_i'): [self.entity_uri(
+                               search_value=self._document.get('creator#_standard#de-DE'),
+                               query_id='person'
+                           )],
+                           self._field.get('f_research_data_item_apers_role'): [self.entity_uri(
+                               search_value='Creator',
+                               query_id='role'
+                           )]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
+
         self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
 
     # Title Information
     def titles(self):
         title_entity_list = []
-        title_entity_list.append(
-            Entity(api=self._api,
-                   fields={
-                       self._field.get('f_research_data_item_title_appel'): [self._document.get('title#de-DE')],
-                       self._field.get('f_research_data_item_title_type'): ['Main']
-                   }, bundle_id=self._bundle.get('g_research_data_item_title'))
-        )
-        title_entity_list.append(
-            Entity(api=self._api,
-                   fields={
-                       self._field.get('f_research_data_item_title_appel'): [self._document.get('alternativetitle#de-DE')],
-                       self._field.get('f_research_data_item_title_type'): ['Alternative']
-                   }, bundle_id=self._bundle.get('g_research_data_item_title'))
-        )
-        title_entity_list.append(
-            Entity(api=self._api,
-                   fields={
-                       self._field.get('f_research_data_item_title_appel'): [self._document.get('_pool#de-DE')],
-                       self._field.get('f_research_data_item_title_type'): ['Sub']
-                   }, bundle_id=self._bundle.get('g_research_data_item_title'))
-        )
+        if self._document.get('title#de-DE') != '':
+            title_entity_list.append(
+                Entity(api=self._api,
+                       fields={
+                           self._field.get('f_research_data_item_title_appel'): [self._document.get('title#de-DE')],
+                           self._field.get('f_research_data_item_title_type'): ['Main']
+                       }, bundle_id=self._bundle.get('g_research_data_item_title'))
+            )
+        if self._document.get('alternativetitle#de-DE') != '':
+            title_entity_list.append(
+                Entity(api=self._api,
+                       fields={
+                           self._field.get('f_research_data_item_title_appel'): [self._document.get('alternativetitle#de-DE')],
+                           self._field.get('f_research_data_item_title_type'): ['Alternative']
+                       }, bundle_id=self._bundle.get('g_research_data_item_title'))
+            )
+        if self._document.get('_pool#de-DE') != '':
+            title_entity_list.append(
+                Entity(api=self._api,
+                       fields={
+                           self._field.get('f_research_data_item_title_appel'): [self._document.get('_pool#de-DE')],
+                           self._field.get('f_research_data_item_title_type'): ['Sub']
+                       }, bundle_id=self._bundle.get('g_research_data_item_title'))
+            )
+        if len(title_entity_list) == 0:
+            return False
         self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
+        return True
 
     # Dates
     def dateinfo(self):
@@ -223,7 +238,7 @@ class EasydbEntity(GeneralEntity):
             # Description
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_desc')] = ['digital images','Digital Photography',]
             # Type of Resource (Mandatory Field)
-            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Image", self._query.get('typeofresource'))]
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [self.entity_uri("Image", 'typeofresource')]
         elif '35mm' in recorder or 'kodachrome' in recorder or 'film' in recorder:
             # Type (Mandatory Field)
             self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = ["Digital"]
@@ -232,34 +247,34 @@ class EasydbEntity(GeneralEntity):
             # Description
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_desc')] = ['digital images','Digital Photography',]
             # Type of Resource (Mandatory Field)
-            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Image", self._query.get('typeofresource'))]
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [self.entity_uri("Image", 'typeofresource')]
         elif 'cassette' in recorder or 'kassette' in recorder or 'mp3' in self._document.get('format').lower() or self._document.get('file#0#url').endswith('mp3'):
             # Type (Mandatory Field)
             self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = ["Digital"]
             # Method
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = ["digitized other analog"]
             # Type of Resource (Mandatory Field)
-            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Audio", self._query.get('typeofresource'))]
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [self.entity_uri("Audio", 'typeofresource')]
         elif self._document.get('file#0#url').endswith('pdf'):
             # Type (Mandatory Field)
             self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = ["Digital"]
             # Method
             self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = ["digitized other analog"]
             # Type of Resource (Mandatory Field)
-            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [entity_uri("Text", self._query.get('typeofresource'))]
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = [self.entity_uri("Text", 'typeofresource')]
             
         # Technical Property
-        self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = self._document.get('colourbw')
+        self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = [self._document.get('colourbw')]
         # Technical Description Note
-        self._research_data_item[self._field.get('f_reseach_data_item_res_t_descr')] = self._document.get('recorder')
+        self._research_data_item[self._field.get('f_reseach_data_item_res_t_descr')] = [self._document.get('recorder')]
 
     def genre(self):
         genre_entities = []
-        authority_uri = entity_uri(search_value='Machine-Readable Cataloging',
-                                       query_string=self._query.get('identifier'))
+        authority_uri = self.entity_uri(search_value='Machine-Readable Cataloging',
+                                       query_id='identifier')
         
-        term_uri = entity_uri(search_value={'term': 'picture', 'authority': authority_uri.split('data/')[1]},
-                              query_string=self._query.get('genre'),
+        term_uri = self.entity_uri(search_value={'term': 'picture', 'authority': authority_uri.split('data/')[1]},
+                              query_id='genre',
                               conditional=True)
         if term_uri is None:
             genre_entities.append(fieldfunction('genre').exception(
@@ -275,16 +290,18 @@ class EasydbEntity(GeneralEntity):
     # TODO: Tags Values
     def tags(self):
         values = []
-        if not self._document.get('keywords[].keyword#de-DE') == '':
+        if self._document.get('keywords[].keyword#de-DE') != '':
             values.extend(self._document.get('keywords[].keyword#de-DE').split('\n'))
-        if not self._document.get('keywords_gnd[].keyword_gnd#_standard') == '':
+        if self._document.get('keywords_gnd[].keyword_gnd#_standard') != '':
             values.extend(self._document.get('keywords_gnd[].keyword_gnd#_standard').split('\n'))
-        if not self._document.get('keywords_aat[].keyword_aat#_standard') == '':
+        if self._document.get('keywords_aat[].keyword_aat#_standard') != '':
             values.extend(self._document.get('keywords_aat[].keyword_aat#_standard').split('\n'))
+        if self._document.get('_pool#de-DE') != '':
+            values.append(self._document.get('_pool#de-DE'))
         if len(values) > 0:
-            self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
+            self._research_data_item[self._field.get('f_reseach_data_item_tag')] = self.entity_list_generate(
                 value_list=values,
-                query_name=self._query.get('tags'),
+                query_name='tags',
                 exception_function=fieldfunction('tags').exception,
                 with_exception=True
             )
@@ -292,27 +309,34 @@ class EasydbEntity(GeneralEntity):
     # Staged Values
 
     def staging(self):
-        self.citation()
-        self.url_link()
-        self.note()
-        self.genre()
-        self.country()
-        self.region()
-        self.subregion()
-        self.place()
-        # ~ #self.role()
-        self.titles()
-        self.dateinfo()
-        self.physicaldesc()
-        self.tags()
-        return self._research_data_item
+        if self.titles():
+            self.citation()
+            self.url_link()
+            self.note()
+            self.genre()
+            self.country()
+            self.region()
+            self.subregion()
+            # ~ self.place()
+            self.role()
+            self.dateinfo()
+            self.physicaldesc()
+            self.tags()
+            return self._research_data_item
+        else:
+            return False
 
     def upload(self):
-        self._api.save(Entity(
-            api=self._api,
-            fields=self.staging(),
-            bundle_id=self._bundle.get('g_research_data_item')
-        ))
+        stage = self.staging()
+        if stage:
+            self._api.save(Entity(
+                api=self._api,
+                fields=stage,
+                bundle_id=self._bundle.get('g_research_data_item')
+            ))
+            return True
+        else:
+            return False
 
 
 # Person Entity Synchronisation
@@ -320,37 +344,46 @@ class EasydbEntity(GeneralEntity):
 
 class EntitySync(GeneralEntity):
 
-    def __init__(self, sync_field, check_list):
+    def __init__(self, sync_field, check_list, api=None, known_entities=None):
 
         # Field name initialisation
         self._sync_field_name = sync_field
         self._list = check_list
 
         # Super Class
-        super().__init__()
+        super().__init__(api, known_entities)
 
         # WissKI Query Dict
         self._wisski_query = {
+            "authorityroles": "authorityrolelist",
             "persons": "personlist",
-            "institutions": "institutionlist"
+            "institutions": "institutionlist",
+            "identifiers": "identifierlist",
+            "projects": "projectlist",
         }
 
         # WissKI Path field Dict
 
         self._wisski_path_field = {
+            "authorityroles": "f_authority_role_name",
             "persons": "f_person_name",
             "institutions": "f_institution_name",
+            "identifiers": "f_authority_name",
+            "projects": "f_project_name",
         }
 
         # WissKI Path Group Dict
 
         self._wisski_path_group = {
+            "authorityroles": "g_authority_role",
             "persons": "g_person",
-            "institutions": "g_institution"
+            "institutions": "g_institution",
+            "identifiers": "g_authority",
+            "projects": "g_project",
         }
 
         # WissKI Data
-        self._wisski_entities = list(entity_uri(search_value="",
+        self._wisski_entities = list(functions.entity_uri(search_value="",
                                                 query_string=self._query.get(self._wisski_query[self._sync_field_name]),
                                                 return_format='csv', value_input=False).iloc[:, 0])
 
@@ -370,4 +403,19 @@ class EntitySync(GeneralEntity):
                 }
                 entity_object = Entity(api=self._api, fields=entity_value,
                                        bundle_id=self._bundle.get(self._wisski_path_group.get(self._sync_field_name)))
+                self._api.save(entity_object)
+    
+    def update_multiple_values(self, values, lookup_key):
+        missing = self.check_missing()
+        if not missing == []:
+            for entity in missing:
+                values_for_update = next((item for item in values if values[lookup_key] == entity), False)
+                if not values_for_update:
+                    continue
+                entity_values = {}
+                for k in values_for_update.keys():
+                    entity_values[self._field.get(k)]= [values_for_update[k]]
+                entity_object = Entity(api=self._api, fields=entity_values,
+                                       bundle_id=self._bundle.get(self._wisski_path_group.get(self._sync_field_name)))
+                print(entity_object)
                 self._api.save(entity_object)
