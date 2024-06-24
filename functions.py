@@ -37,8 +37,10 @@ def entity_uri(search_value: str | dict[str, str],
                value_input=True,
                conditional=False) -> str | object | None:
     format_dict = {'json': JSON, 'csv': CSV}
-    sparql = SPARQLWrapper("http://132.180.10.160:7200/repositories/amo_data")
+    sparql = SPARQLWrapper("http://132.180.10.177:7200/repositories/wisski_test")
     sparql.setReturnFormat(format_dict[return_format])
+    sparql.setHTTPAuth('BASIC')
+    sparql.setCredentials("admin", "WissKIAI4#")
     if value_input:
         if not conditional:
             sparql.setQuery(query_string.format(search_value=search_value))
