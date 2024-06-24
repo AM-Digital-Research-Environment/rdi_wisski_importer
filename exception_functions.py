@@ -11,10 +11,10 @@ from wisski.api import Api, Pathbuilder, Entity
 
 class fieldfunction(GeneralEntity):
 
-    def __init__(self, field_name):
+    def __init__(self, field_name, api=None, known_entities=None):
 
         # Super Class
-        super().__init__()
+        super().__init__(api, known_entities)
 
         # Field Dictionary
         self._path_dict = {
@@ -25,7 +25,9 @@ class fieldfunction(GeneralEntity):
             'place': {
                 'bundle': self._bundle.get('g_place'),
                 'field': self._field.get('f_place_name'),
-                'qualifier': self._field.get('g_place_in_country')
+                'qualifier': self._field.get('g_place_in_country'),
+                'qualifier2': self._field.get('g_place_in_region'),
+                'qualifier3': self._field.get('g_place_in_subregion')
             },
             'subregion': {
                 'bundle': self._bundle.get('g_subregion'),
@@ -51,15 +53,15 @@ class fieldfunction(GeneralEntity):
         self._field_info = self._path_dict.get(field_name)
 
     # Generalised Exception Function
-    def exception(self, entity_value, qualifier_value=None, with_qualifier=False):
+    def exception(self, entity_value, qualifier_value=None, with_qualifier=False, qualifier2=None, qualifier3=None):
         if entity_value is not None:
             fields_data = {self._field_info.get('field'): [entity_value]}
             if with_qualifier:
                 fields_data[self._field_info.get('qualifier')] = [qualifier_value]
-            else:
-                pass
+                if qualifier2 is not None:
+                    fields_data[self._field_info.get('qualifier2')] = [qualifier2]
+                if qualifier3 is not None:
+                    fields_data[self._field_info.get('qualifier3')] = [qualifier3]
             return Entity(api=self._api,
                           fields=fields_data,
                           bundle_id=self._field_info.get('bundle'))
-        else:
-            pass

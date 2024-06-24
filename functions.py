@@ -27,7 +27,6 @@ def entity_uri(search_value: str | dict[str, str],
                conditional=False) -> str | object | None:
     format_dict = {'json': JSON, 'csv': CSV}
     sparql = SPARQLWrapper("***REMOVED***")
-    # For Virtuoso, use BASIC, not DIGEST
     sparql.setHTTPAuth('BASIC')
     sparql.setCredentials('***REMOVED***', '***REMOVED***')
     sparql.setReturnFormat(format_dict[return_format])

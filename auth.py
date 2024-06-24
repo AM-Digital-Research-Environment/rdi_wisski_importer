@@ -55,11 +55,13 @@ class GeneralEntity:
         
         if query_id not in self.wisski_entities or _entity_key not in self.wisski_entities[query_id]:
                 q = self._query.get(query_id)
-                if query_id not in self.wisski_entities:
-                        self.wisski_entities[query_id] = {}
-                
                 entity = functions.entity_uri(search_value=search_value, query_string=q, return_format=return_format, value_input=value_input, conditional=conditional)
-                self.wisski_entities[query_id][_entity_key] = entity
+                if entity is not None:
+                        if query_id not in self.wisski_entities:
+                                self.wisski_entities[query_id] = {}
+                        self.wisski_entities[query_id][_entity_key] = entity
+                else:
+                        return None
                 # ~ print("had to update known entities for",query_id)
         # ~ print(json.dumps(self.wisski_entities, indent=2))
         return self.wisski_entities[query_id][_entity_key]

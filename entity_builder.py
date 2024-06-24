@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 from wisski.api import Api, Pathbuilder, Entity
 
 # Local Functions
-from functions import *
+import functions
 from auth import GeneralEntity
 from exception_functions import fieldfunction
 
@@ -24,13 +24,15 @@ from exception_functions import fieldfunction
 
 class DocumentEntity(GeneralEntity):
 
-    def __init__(self, bson_doc):
+    def __init__(self, bson_doc, api=None, known_entities=None):
 
         # Super class
-        super().__init__()
+        super().__init__(api, known_entities)
 
         # BSON Metadata Document
         self._document = bson_doc
+        self.api = api
+        self.known_entities = known_entities
 
         # GeoLoc Information
         self._origin = self._document.get('location').get('origin')
@@ -40,14 +42,14 @@ class DocumentEntity(GeneralEntity):
 
             # Type of Resource (Mandatory Field)
             self._field.get('f_research_data_item_type_res'): [
-                entity_uri(self._document.get('typeOfResource'), self._query.get('typeofresource'))],
+                self.entity_uri(self._document.get('typeOfResource'), 'typeofresource')],
 
             # Field for Identifiers (Mandatory Field)
             self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
 
             # Project (Mandatory Field)
             self._field.get('f_research_data_item_project'): [
-                entity_uri(self._document.get('project')['id'], self._query.get('projectid'))]
+                self.entity_uri(self._document.get('project')['id'], 'projectid')]
         }
     # Entity list of identifiers
 
@@ -56,8 +58,7 @@ class DocumentEntity(GeneralEntity):
         # Initialising DRE Identifier
         dreId_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('dre_id')],
-            self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier",
-                                                                     self._query.get('identifier'))]
+            self._field['f_research_data_item_id_type']: [self.entity_uri("DRE Identifier", 'identifier')]
         }
         
         dreId_entity = Entity(api=self._api, fields=dreId_fields,
@@ -70,7 +71,7 @@ class DocumentEntity(GeneralEntity):
             identifier_fields = {
                 self._field['f_research_data_item_id_name']: [iden.get('identifier')],
                 self._field['f_research_data_item_id_type']: [
-                    entity_uri(iden.get('identifier_type'), self._query.get('identifier'))]
+                    self.entity_uri(iden.get('identifier_type'), 'identifier')]
             }
             identifier_entity = Entity(api=self._api,
                                        fields=identifier_fields,
@@ -82,10 +83,10 @@ class DocumentEntity(GeneralEntity):
     def langauge(self):
         if not self._document.get('langauge') == []:
             document_languages = [try_func(l, lambda x: self._language.get(x)) for l in self._document.get('language')]
-            self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
+            self._research_data_item[self._field.get('f_research_data_item_language')] = self.entity_list_generate(
                 document_languages,
-                self._query.get('language'),
-                exception_function=fieldfunction('language').exception,
+                'language',
+                exception_function=fieldfunction('language', self.api, self.known_entities).exception,
                 with_exception=True
             )
         else:
@@ -103,9 +104,9 @@ class DocumentEntity(GeneralEntity):
     def country(self):
         if not pd.isna(self._origin.get('l1')):
             self._research_data_item[self._field.get('f_research_data_creat_country')] = [
-                entity_uri(
+                self.entity_uri(
                     search_value=self._origin.get('l1'),
-                    query_string=self._query.get('country')
+                    query_id='country'
                 )
             ]
         else:
@@ -114,10 +115,10 @@ class DocumentEntity(GeneralEntity):
     # Region (level 2)
     def region(self):
         if not pd.isna(self._origin.get('l2')):
-            region_uri = entity_uri(
+            region_uri = self.entity_uri(
                 search_value={'level_0': self._origin.get('l2'),
                               'level_1': self._origin.get('l1')},
-                query_string=self._query.get('region'),
+                query_string='region',
                 conditional=True)
             self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
             return region_uri
@@ -127,19 +128,19 @@ class DocumentEntity(GeneralEntity):
     # Subregion
     def subregion(self):
         if not pd.isna(self._origin.get('l3')):
-            subregion = entity_uri(
+            subregion = self.entity_uri(
                 search_value={
                     'level_0': self._origin.get('l3'),
                     'level_1': self._origin.get('l2')
                 },
-                query_string=self._query.get('subregion'),
+                query_string='subregion',
                 conditional=True
             )
             if subregion is not None and urlparse(subregion).scheme != '':
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
             elif subregion is None:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                    fieldfunction('subregion').exception(entity_value=self._origin.get('l3'),
+                    fieldfunction('subregion', self.api, self.known_entities).exception(entity_value=self._origin.get('l3'),
                                                          qualifier_value=self.region(),
                                                          with_qualifier=True)
                 ]
@@ -165,9 +166,9 @@ class DocumentEntity(GeneralEntity):
     # Copyright
     def copyright(self):
         if not self._document.get('accessCondition')['rights'] == []:
-            self._research_data_item[self._field.get('f_research_data_item_copyright')] = entity_list_generate(
+            self._research_data_item[self._field.get('f_research_data_item_copyright')] = self.entity_list_generate(
                 self._document.get('accessCondition')['rights'],
-                self._query.get('license')
+                'license'
             )
         else:
             pass
@@ -213,13 +214,13 @@ class DocumentEntity(GeneralEntity):
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_sponsor'): [entity_uri(
+                           self._field.get('f_research_data_item_sponsor'): [self.entity_uri(
                                search_value=funder,
-                               query_string=self._query.get('sponsor')
+                               query_string='sponsor'
                            )],
-                           self._field.get('f_research_data_item_apers_role'): [entity_uri(
+                           self._field.get('f_research_data_item_apers_role'): [self.entity_uri(
                                search_value='Sponsor',
-                               query_string=self._query.get('role')
+                               query_string='role'
                            )]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
@@ -228,13 +229,13 @@ class DocumentEntity(GeneralEntity):
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_role_holder'): [entity_uri(
+                           self._field.get('f_research_data_item_role_holder'): [self.entity_uri(
                                search_value=name.get('name'),
-                               query_string=self._query.get('person')
+                               query_string='person'
                            )],
-                           self._field.get('f_research_data_item_apers_role'): [entity_uri(
+                           self._field.get('f_research_data_item_apers_role'): [self.entity_uri(
                                search_value=name.get('role'),
-                               query_string=self._query.get('role')
+                               query_string='role'
                            )]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
@@ -326,14 +327,14 @@ class DocumentEntity(GeneralEntity):
         genre_entities = []
         genre_terms = self._document.get('genre')
         for authority in genre_terms.keys():
-            authority_uri = entity_uri(search_value=genre_dict.get(authority),
-                                       query_string=self._query.get('identifier'))
+            authority_uri = self.entity_uri(search_value=genre_dict.get(authority),
+                                       query_id='identifier')
             for term in genre_terms.get(authority):
-                term_uri = entity_uri(search_value={'term': term, 'authority': authority_uri.split('data/')[1]},
-                                      query_string=self._query.get('genre'),
+                term_uri = self.entity_uri(search_value={'term': term, 'authority': authority_uri.split('data/')[1]},
+                                      query_id='genre',
                                       conditional=True)
                 if term_uri is None:
-                    genre_entities.append(fieldfunction('genre').exception(
+                    genre_entities.append(fieldfunction('genre', self.api, self.known_entities).exception(
                         entity_value=term,
                         qualifier_value=authority_uri,
                         with_qualifier=True
@@ -349,8 +350,8 @@ class DocumentEntity(GeneralEntity):
         if not len(self._document.get('subject')) == 0:
             self._research_data_item[self._field.get('f_research_data_item_subject')] = entity_list_generate(
                 value_list=self._document.get('subject'),
-                query_name=self._query.get('subject'),
-                exception_function=fieldfunction('subject').exception,
+                query_id='subject',
+                exception_function=fieldfunction('subject', self.api, self.known_entities).exception,
                 with_exception=True
             )
         else:
@@ -362,8 +363,8 @@ class DocumentEntity(GeneralEntity):
         if not len(self._document.get('tags')) == 0:
             self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
                 value_list=self._document.get('tags'),
-                query_name=self._query.get('tags'),
-                exception_function=fieldfunction('tags').exception,
+                query_id='tags',
+                exception_function=fieldfunction('tags', self.api, self.known_entities).exception,
                 with_exception=True
             )
         else:
@@ -439,7 +440,7 @@ class EntitySync(GeneralEntity):
         self._mongo_list = self._mongo_client['dev'][self._sync_field_name].distinct('name')
 
         # WissKI Data
-        self._wisski_entities = list(entity_uri(search_value="",
+        self._wisski_entities = list(functions.entity_uri(search_value="",
                                                 query_string=self._query.get(self._wisski_query[self._sync_field_name]),
                                                 return_format='csv', value_input=False).iloc[:, 0])
 

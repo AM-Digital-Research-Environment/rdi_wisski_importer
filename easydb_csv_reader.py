@@ -15,7 +15,8 @@ BASE = Path(__file__).stem
 logger = logging.getLogger(BASE)
 
 
-READ_IN_MAX = 3
+READ_IN_MAX = 50
+READ_IN_PER_LOCATION_MAX = 3
 
 def main(args):
   logger.info(args)
@@ -35,6 +36,10 @@ def main(args):
     print("restore geonames from",geolocs_file)
     location_resolver = GeonamesWikidataResolver().load(geolocs_file.resolve())
   
+  n_locations = len(location_resolver.get_mappings())
+  READ_IN_MAX = n_locations * READ_IN_PER_LOCATION_MAX
+  print(f"updated READ_IN_MAX to {READ_IN_MAX} ({READ_IN_PER_LOCATION_MAX} * {n_locations})")
+  
   with open(args.csv[0], 'r') as _csv:
     easydb = csv.DictReader(_csv, delimiter=';', quotechar='"')
     n_fields = len(easydb.fieldnames)
@@ -51,10 +56,10 @@ def main(args):
     for row in easydb:
       p = row['creator#_standard#de-DE']
       if p != '':
-        persons.add(p)
+        persons.add(p.strip())
       p = row['context_funding#_standard#de-DE']
       if p != '':
-        projects.add(p)
+        projects.add(p.strip())
     
     es = EntitySync('persons', list(persons))
     es.update()
@@ -63,28 +68,49 @@ def main(args):
     es = EntitySync('projects', list(projects), api, known_entities)
     es.update()
     known_entities = es.get_known_entities()
-    EntitySync('institutions', ['Collections@UBT'], api, known_entities)
+    es = EntitySync('institutions', ['Collections@UBT'], api, known_entities)
     es.update()
     known_entities = es.get_known_entities()
     known_objects = EntitySync("easydb_objects", None, api)._wisski_entities
-    
-    return
     
     _csv.seek(0) # reset file pointer, re-iterater over the file
     next(easydb) # skip header
     print("start intake of data now")
     errors = {}
     success = 0
+    
+    known_locations={}
+    
     for i,row in enumerate(easydb):
-      ent = EasydbEntity(row, known_objects = known_objects, location_resolver=location_resolver, api=api, known_entities=known_entities)
+      _id = row['placeoforigin_geographical#_system_object_id']
+      if _id == '':
+        print("skipping row",i+1,"(no location information)")
+        continue
+      if _id in known_locations.keys():
+        if known_locations[_id] >= READ_IN_PER_LOCATION_MAX:
+          print("skipping row",i+1,"(too many samples per location)")
+          continue
+      else:
+         known_locations[_id] = 0
+      if row['alternativetitle#de-DE'] == '':
+          print("skipping row",i+1,"(no alternative title)")
+          continue
+      if row['file#2#url'] == '':
+          print("skipping row",i+1,"(no preview image)")
+          continue
+      ent = EasydbEntity(row, known_objects = known_objects, location_mappings=location_resolver.get_mappings(), api=api, known_entities=known_entities)
       known_entities = ent.get_known_entities()
       if ent.get_already_in_db():
         errors[str(i)] = row
-        print("error in row",i+1,"(already in db)")
+        known_locations[_id] += 1
+        print("skipping row",i+1,"(already in db)")
         continue
       try:
         ent.upload()
+        # ~ if _id == "1152":
+          # ~ print(ent.staging())
         success += 1
+        known_locations[_id] += 1
         print("successfully written",i+1)
       except KeyboardInterrupt:
         print('Interrupted')
@@ -97,8 +123,7 @@ def main(args):
       except Exception as e:
         errors[str(i)] = row
         save_errors(errors)
-        print("error in row",i+1,e.get_message())
-        sleep(1)
+        print("error in row",i+1,repr(e))
       if success == READ_IN_MAX:
         break
     

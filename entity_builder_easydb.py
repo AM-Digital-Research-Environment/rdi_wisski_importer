@@ -23,7 +23,7 @@ from exception_functions import fieldfunction
 
 class EasydbEntity(GeneralEntity):
 
-    def __init__(self, entry_dict, known_objects=None, location_resolver=None, api=None, known_entities=None):
+    def __init__(self, entry_dict, known_objects=None, location_mappings=None, api=None, known_entities=None):
         # Super class
         super().__init__(api, known_entities)
         
@@ -31,10 +31,11 @@ class EasydbEntity(GeneralEntity):
 
         # Metadata Document
         self._document = entry_dict
+        self.api = api
+        self.known_entities = known_entities
         
         # Mapping of Location Names
-        self.countries = location_resolver.get_country_mappings()
-        self.regions = location_resolver.get_region_mappings()
+        self.location_mappings = location_mappings
         
         if self._document.get('_global_object_id').strip() not in known_objects:
             self.already_in_database = False
@@ -55,20 +56,6 @@ class EasydbEntity(GeneralEntity):
     
     def get_already_in_db(self):
         return self.already_in_database
-    
-    def get_country_name(self, easydbid):
-        if easydbid in self.countries.keys():
-            return self.countries[easydbid]
-        if easydbid in self.regions.keys():
-            return self.regions[easydbid]
-        return -1
-    
-    def get_region_name(self, easydbid):
-        if easydbid in self.regions.keys():
-            return self.regions[easydbid]
-        return -1
-        
-    
     
     # Entity list of identifiers
 
@@ -94,87 +81,68 @@ class EasydbEntity(GeneralEntity):
     def citation(self):
         if not self._document.get('exploitationrights[].otherlicences') == '':
             self._research_data_item[self._field.get('f_research_data_item_citation')] = [self._document.get('exploitationrights[].otherlicences')]
-
+    
     # Geographic Location
-    def country(self):
-        if not self._document.get('placeoforigin_geographical#_system_object_id') == '':
-            cname = self.get_country_name(self._document.get('placeoforigin_geographical#_system_object_id'))
-            if cname != -1:
-                self._research_data_item[self._field.get('f_research_data_creat_country')] = [
-                    self.entity_uri(
-                        search_value=cname,
+    def location(self):
+        if self._document.get('placeoforigin_geographical#_system_object_id') != '' and int(self._document.get('placeoforigin_geographical#_system_object_id')) in self.location_mappings.keys():
+            mapping = self.location_mappings[int(self._document.get('placeoforigin_geographical#_system_object_id'))]
+            # Region (level 0)
+            if 'country' in mapping:
+                country_uri = self.entity_uri(
+                        search_value=mapping['country'],
                         query_id='country'
                     )
-                ]
-
-    def get_region_uri(self):
-        if self._document.get('placeoforigin_geographical#_system_object_id') != '':
-            cname = self.get_country_name(self._document.get('placeoforigin_geographical#_system_object_id'))
-            rname = self.get_region_name(self._document.get('placeoforigin_geographical#_system_object_id'))
-            if cname != -1 and rname != -1:
-                region_uri = self.entity_uri(
-                        search_value={'level_1': cname,
-                                      'level_0': rname},
-                        query_id='region',
-                        conditional = True
-                    )
-                return region_uri
-        return False
-
-    # Region (level 2)
-    def region(self):
-        if self._document.get('placeoforigin_geographical#_standard#en-US#1') != '':
-            region_uri = self.get_region_uri()
-            if region_uri is not None and region_uri != False:
-                self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
-
-    # Subregion
-    def subregion(self):
-        if not self._document.get('placeoforigin_geographical#_standard#en-US#2') == '' and not self._document.get('placeoforigin_geographical#_system_object_id') == '':
-            rname = self.get_region_name(self._document.get('placeoforigin_geographical#_system_object_id'))
-            if rname != -1:
-                subregion = self.entity_uri(
-                    search_value={
-                        'level_0': self._document.get('placeoforigin_geographical#_standard#en-US#2'),
-                        'level_1': rname
-                    },
-                    query_id='subregion',
-                    conditional=True
-                )
-                if subregion is not None and urlparse(subregion).scheme != '':
-                    self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
-                elif subregion is None:
-                    self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                        fieldfunction('subregion').exception(entity_value=self._document.get('placeoforigin_geographical#_standard#en-US#2'),
-                                                             qualifier_value=self.get_region_uri(),
-                                                             with_qualifier=True)
-                    ]
-            
-    def place(self):
-        if self._document.get('placeoforigin_details') != '' and self._document.get('placeoforigin_geographical#_system_object_id') != '':
-            place_str = re.sub(r"^\W+", "", self._document.get('placeoforigin_details'))
-            cname = self.get_country_name(self._document.get('placeoforigin_geographical#_system_object_id'))
-            if cname != -1:
-                place = self.entity_uri(
-                    search_value={
-                        'level_0': place_str,
-                        'level_1': cname
-                    },
-                    query_id='place',
-                    conditional=True
-                )
-                if place is not None and urlparse(place).scheme != '':
-                    self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [place]
-                elif place is None:
-                    country_uri = self.entity_uri(
-                        search_value=cname,
-                        query_id='country'
-                    )
-                    self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [
-                        fieldfunction('place').exception(entity_value=place_str,
-                                                         qualifier_value=country_uri,
-                                                         with_qualifier=True)
-                    ]
+                self._research_data_item[self._field.get('f_research_data_creat_country')] = [country_uri]
+                # Region (level 1)
+                region_uri = None
+                subregion_uri = None
+                if 'region' in mapping:
+                    region_uri = self.entity_uri(
+                            search_value={'level_1': mapping['country'],
+                                          'level_0': mapping['region']},
+                            query_id='region',
+                            conditional = True
+                        )
+                    self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
+                    
+                    # Subegion (level 2)
+                    if 'subregion' in mapping:
+                        subregion_uri = self.entity_uri(
+                            search_value={
+                                'level_0': mapping['subregion'],
+                                'level_1': mapping['region']
+                            },
+                            query_id='subregion',
+                            conditional=True
+                        )
+                        if subregion_uri is not None and urlparse(subregion_uri).scheme != '':
+                            self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion_uri]
+                        elif subregion_uri is None:
+                            subregion_uri = fieldfunction('subregion', self.api, self.known_entities).exception(entity_value=mapping['subregion'],
+                                                                     qualifier_value=region_uri,
+                                                                     with_qualifier=True)
+                            self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion_uri]
+                
+                # ~ if 'place' in mapping:
+                    # ~ place = self.entity_uri(
+                        # ~ search_value={
+                            # ~ 'level_0': mapping['place'],
+                            # ~ 'level_1': mapping['country']
+                        # ~ },
+                        # ~ query_id='place',
+                        # ~ conditional=True
+                    # ~ )
+                    # ~ if place is not None and urlparse(place).scheme != '':
+                        # ~ self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [place]
+                    # ~ elif place is None:
+                        # ~ print("try adding place", country_uri, region_uri, subregion_uri)
+                        # ~ place_uri = fieldfunction('place', self.api, self.known_entities).exception(entity_value=mapping['place'],
+                                                             # ~ qualifier_value=country_uri,
+                                                             # ~ qualifier2=region_uri,
+                                                             # ~ qualifier3=subregion_uri,
+                                                             # ~ with_qualifier=True)
+                        # ~ print(place_uri)
+                        # ~ self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [place_uri]
 
     # URL
     def url_link(self):
@@ -183,7 +151,6 @@ class EasydbEntity(GeneralEntity):
     # URL
     def preview_image_url(self):
         if self._document.get('file#2#url') != '':
-            print("found image",self._document.get('file#2#url'))
             self._research_data_item[self._field.get('f_research_data_item_prv_img_url')] = [self._document.get('file#2#url')]
 
     # Note(s)
@@ -211,7 +178,7 @@ class EasydbEntity(GeneralEntity):
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_role_hldr_i'): [self.entity_uri(
+                           self._field.get('f_research_data_item_role_holder'): [self.entity_uri(
                                search_value=self._document.get('creator#_standard#de-DE'),
                                query_id='person'
                            )],
@@ -258,10 +225,20 @@ class EasydbEntity(GeneralEntity):
 
     # Dates
     def dateinfo(self):
-        date_value = datetime.strftime(
-                        datetime.fromisoformat(self._document.get('recordingdate')),
-                        "%Y-%m-%d")
-        self._research_data_item[self._field.get('f_research_data_item_create_date')] = [date_value]
+        date_value = None
+        try:
+            date_value = datetime.strftime(
+                            datetime.fromisoformat(self._document.get('recordingdate')),
+                            "%Y-%m-%d")
+        except ValueError:
+            try:
+                date_value = datetime.strftime(
+                                datetime.strptime(self._document.get('recordingdate'), '%Y-%m'),
+                                "%Y-%m-01")
+            except ValueError:
+                pass
+        if date_value is not None:
+            self._research_data_item[self._field.get('f_research_data_item_create_date')] = [date_value]
 
     # Technical Description
 
@@ -315,7 +292,7 @@ class EasydbEntity(GeneralEntity):
                               query_id='genre',
                               conditional=True)
         if term_uri is None:
-            genre_entities.append(fieldfunction('genre').exception(
+            genre_entities.append(fieldfunction('genre', self.api, self.known_entities).exception(
                 entity_value='picture',
                 qualifier_value=authority_uri,
                 with_qualifier=True
@@ -340,7 +317,7 @@ class EasydbEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_reseach_data_item_tag')] = self.entity_list_generate(
                 value_list=values,
                 query_name='tags',
-                exception_function=fieldfunction('tags').exception,
+                exception_function=fieldfunction('tags', self.api, self.known_entities).exception,
                 with_exception=True
             )
 
@@ -352,9 +329,7 @@ class EasydbEntity(GeneralEntity):
             self.url_link()
             self.note()
             self.genre()
-            self.country()
-            self.region()
-            self.subregion()
+            self.location()
             self.preview_image_url()
             self.role()
             self.dateinfo()
@@ -363,7 +338,7 @@ class EasydbEntity(GeneralEntity):
             
             # not working yet
             # ~ self.place()
-            print(self._research_data_item)
+            # ~ print(self._research_data_item)
             return self._research_data_item
         else:
             return False
@@ -441,6 +416,7 @@ class EntitySync(GeneralEntity):
         missing = self.check_missing()
         if not missing == []:
             for entity in missing:
+                print(entity)
                 entity_value = {
                     self._field.get(self._wisski_path_field.get(self._sync_field_name)): [entity]
                 }
