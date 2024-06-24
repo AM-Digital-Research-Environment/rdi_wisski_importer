@@ -23,7 +23,7 @@ from exception_functions import fieldfunction
 
 class EasydbEntity(GeneralEntity):
 
-    def __init__(self, entry_dict, api=None, known_entities=None):
+    def __init__(self, entry_dict, known_objects=None, location_resolver=None, api=None, known_entities=None):
         # Super class
         super().__init__(api, known_entities)
         
@@ -31,21 +31,44 @@ class EasydbEntity(GeneralEntity):
 
         # Metadata Document
         self._document = entry_dict
-
-        # GeoLoc Information
-        # ~ self._origin = self._document.get('location').get('origin')
-
-        # Core dictionary for Research Data Items
-        self._research_data_item = {
-
-            # Field for Identifiers (Mandatory Field)
-            self._bundle.get('g_research_data_item_identifier'): self.identifier_entities()
-        }
         
-        # Project (Mandatory Field)
-        if self._document.get('context_funding#_standard#de-DE') != '':
-            self._research_data_item[self._field.get('f_research_data_item_project')] = [
-                self.entity_uri(self._document.get('context_funding#_standard#de-DE'), 'projectname')]
+        # Mapping of Location Names
+        self.countries = location_resolver.get_country_mappings()
+        self.regions = location_resolver.get_region_mappings()
+        
+        if self._document.get('_global_object_id').strip() not in known_objects:
+            self.already_in_database = False
+        
+            # Core dictionary for Research Data Items
+            self._research_data_item = {
+
+                # Field for Identifiers (Mandatory Field)
+                self._bundle.get('g_research_data_item_identifier'): self.identifier_entities()
+            }
+            
+            # Project (Mandatory Field)
+            if self._document.get('context_funding#_standard#de-DE') != '':
+                self._research_data_item[self._field.get('f_research_data_item_project')] = [
+                    self.entity_uri(self._document.get('context_funding#_standard#de-DE'), 'projectname')]
+        else:
+            self.already_in_database = True
+    
+    def get_already_in_db(self):
+        return self.already_in_database
+    
+    def get_country_name(self, easydbid):
+        if easydbid in self.countries.keys():
+            return self.countries[easydbid]
+        if easydbid in self.regions.keys():
+            return self.regions[easydbid]
+        return -1
+    
+    def get_region_name(self, easydbid):
+        if easydbid in self.regions.keys():
+            return self.regions[easydbid]
+        return -1
+        
+    
     
     # Entity list of identifiers
 
@@ -53,7 +76,7 @@ class EasydbEntity(GeneralEntity):
         # Initialising easydb Identifier
         easydb_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('_global_object_id')],
-            self._field['f_research_data_item_id_type']: [self.entity_uri("Collections@UBT Identifier",'identifier')]
+            self._field['f_research_data_item_id_type']: [self.entity_uri("Publisher, distributor, or vendor stock number",'identifier')]
         }
         easydb_entity = Entity(api=self._api, fields=easydb_fields,
                               bundle_id=self._bundle['g_research_data_item_identifier'])
@@ -61,7 +84,7 @@ class EasydbEntity(GeneralEntity):
         # Initialising inventory Identifier
         inventory_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('registrationnumber')],
-            self._field['f_research_data_item_id_type']: [self.entity_uri("Collections@UBT Inventory Number",'identifier')]
+            self._field['f_research_data_item_id_type']: [self.entity_uri("Locally defined identifier",'identifier')]
         }
         inventory_entity = Entity(api=self._api, fields=inventory_fields,
                               bundle_id=self._bundle['g_research_data_item_identifier'])
@@ -74,23 +97,28 @@ class EasydbEntity(GeneralEntity):
 
     # Geographic Location
     def country(self):
-        if not self._document.get('placeoforigin_geographical#_standard#en-US#0') == '':
-            self._research_data_item[self._field.get('f_research_data_creat_country')] = [
-                self.entity_uri(
-                    search_value=self._document.get('placeoforigin_geographical#_standard#en-US#0'),
-                    query_id='country'
-                )
-            ]
+        if not self._document.get('placeoforigin_geographical#_system_object_id') == '':
+            cname = self.get_country_name(self._document.get('placeoforigin_geographical#_system_object_id'))
+            if cname != -1:
+                self._research_data_item[self._field.get('f_research_data_creat_country')] = [
+                    self.entity_uri(
+                        search_value=cname,
+                        query_id='country'
+                    )
+                ]
 
     def get_region_uri(self):
-        if self._document.get('placeoforigin_geographical#_standard#en-US#1') != '':
-            region_uri = self.entity_uri(
-                    search_value={'level_1': self._document.get('placeoforigin_geographical#_standard#en-US#0').strip(),
-                                  'level_0': self._document.get('placeoforigin_geographical#_standard#en-US#1').strip()},
-                    query_id='region',
-                    conditional = True
-                )
-            return region_uri
+        if self._document.get('placeoforigin_geographical#_system_object_id') != '':
+            cname = self.get_country_name(self._document.get('placeoforigin_geographical#_system_object_id'))
+            rname = self.get_region_name(self._document.get('placeoforigin_geographical#_system_object_id'))
+            if cname != -1 and rname != -1:
+                region_uri = self.entity_uri(
+                        search_value={'level_1': cname,
+                                      'level_0': rname},
+                        query_id='region',
+                        conditional = True
+                    )
+                return region_uri
         return False
 
     # Region (level 2)
@@ -102,51 +130,61 @@ class EasydbEntity(GeneralEntity):
 
     # Subregion
     def subregion(self):
-        if not self._document.get('placeoforigin_geographical#_standard#en-US#2') == '' and not self._document.get('placeoforigin_geographical#_standard#en-US#1') == '':
-            subregion = self.entity_uri(
-                search_value={
-                    'level_0': self._document.get('placeoforigin_geographical#_standard#en-US#2'),
-                    'level_1': self._document.get('placeoforigin_geographical#_standard#en-US#1')
-                },
-                query_id='subregion',
-                conditional=True
-            )
-            if subregion is not None and urlparse(subregion).scheme != '':
-                self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
-            elif subregion is None:
-                self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                    fieldfunction('subregion').exception(entity_value=self._document.get('placeoforigin_geographical#_standard#en-US#2'),
-                                                         qualifier_value=self.get_region_uri(),
-                                                         with_qualifier=True)
-                ]
+        if not self._document.get('placeoforigin_geographical#_standard#en-US#2') == '' and not self._document.get('placeoforigin_geographical#_system_object_id') == '':
+            rname = self.get_region_name(self._document.get('placeoforigin_geographical#_system_object_id'))
+            if rname != -1:
+                subregion = self.entity_uri(
+                    search_value={
+                        'level_0': self._document.get('placeoforigin_geographical#_standard#en-US#2'),
+                        'level_1': rname
+                    },
+                    query_id='subregion',
+                    conditional=True
+                )
+                if subregion is not None and urlparse(subregion).scheme != '':
+                    self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
+                elif subregion is None:
+                    self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
+                        fieldfunction('subregion').exception(entity_value=self._document.get('placeoforigin_geographical#_standard#en-US#2'),
+                                                             qualifier_value=self.get_region_uri(),
+                                                             with_qualifier=True)
+                    ]
             
     def place(self):
-        if not self._document.get('placeoforigin_details') == '':
+        if self._document.get('placeoforigin_details') != '' and self._document.get('placeoforigin_geographical#_system_object_id') != '':
             place_str = re.sub(r"^\W+", "", self._document.get('placeoforigin_details'))
-            place = self.entity_uri(
-                search_value={
-                    'level_0': place_str,
-                    'level_1': self._document.get('placeoforigin_geographical#_standard#en-US#0')
-                },
-                query_id='place',
-                conditional=True
-            )
-            if place is not None and urlparse(place).scheme != '':
-                self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [place]
-            elif place is None:
-                country_uri = self.entity_uri(
-                    search_value=self._document.get('placeoforigin_geographical#_standard#en-US#0'),
-                    query_id='country'
+            cname = self.get_country_name(self._document.get('placeoforigin_geographical#_system_object_id'))
+            if cname != -1:
+                place = self.entity_uri(
+                    search_value={
+                        'level_0': place_str,
+                        'level_1': cname
+                    },
+                    query_id='place',
+                    conditional=True
                 )
-                self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [
-                    fieldfunction('place').exception(entity_value=place_str,
-                                                     qualifier_value=country_uri,
-                                                     with_qualifier=True)
-                ]
+                if place is not None and urlparse(place).scheme != '':
+                    self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [place]
+                elif place is None:
+                    country_uri = self.entity_uri(
+                        search_value=cname,
+                        query_id='country'
+                    )
+                    self._research_data_item[self._field.get('f_research_data_item_create_loc')] = [
+                        fieldfunction('place').exception(entity_value=place_str,
+                                                         qualifier_value=country_uri,
+                                                         with_qualifier=True)
+                    ]
 
     # URL
     def url_link(self):
         self._research_data_item[self._field.get('f_research_data_item_url')] = ['https://collections.uni-bayreuth.de/#/detail/' + self._document.get('_global_object_id')]
+        
+    # URL
+    def preview_image_url(self):
+        if self._document.get('file#2#url') != '':
+            print("found image",self._document.get('file#2#url'))
+            self._research_data_item[self._field.get('f_research_data_item_prv_img_url')] = [self._document.get('file#2#url')]
 
     # Note(s)
     def note(self):
@@ -309,7 +347,7 @@ class EasydbEntity(GeneralEntity):
     # Staged Values
 
     def staging(self):
-        if self.titles():
+        if not self.already_in_database and self.titles():
             self.citation()
             self.url_link()
             self.note()
@@ -317,11 +355,15 @@ class EasydbEntity(GeneralEntity):
             self.country()
             self.region()
             self.subregion()
-            # ~ self.place()
+            self.preview_image_url()
             self.role()
             self.dateinfo()
             self.physicaldesc()
             self.tags()
+            
+            # not working yet
+            # ~ self.place()
+            print(self._research_data_item)
             return self._research_data_item
         else:
             return False
@@ -360,6 +402,7 @@ class EntitySync(GeneralEntity):
             "institutions": "institutionlist",
             "identifiers": "identifierlist",
             "projects": "projectlist",
+            "easydb_objects": "easydb_ids"
         }
 
         # WissKI Path field Dict

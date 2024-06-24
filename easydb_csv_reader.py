@@ -5,14 +5,17 @@ from pathlib import Path
 import os.path
 import pandas as pd
 
-import copy
 import json
 import csv
 from entity_builder_easydb import *
 from path_extractor import pathbuilder_save
+from geonames_to_wikidata import GeonamesWikidataResolver
 
 BASE = Path(__file__).stem
 logger = logging.getLogger(BASE)
+
+
+READ_IN_MAX = 3
 
 def main(args):
   logger.info(args)
@@ -21,16 +24,31 @@ def main(args):
   print(f"updating field ids from {filename}")
   pathbuilder_save(Path(filename).resolve())
   
-  # ~ return
+  geolocs_file = Path('./geoloc/countries_and_states.pickle')
+  if not geolocs_file.exists():
+    print("fetching geonames")
+    location_resolver = GeonamesWikidataResolver(Path('./geoloc/countries_and_states.tsv'))
+    location_resolver.collect_location_ids_from_file(args.csv[0])
+    location_resolver.resolve_geonames()
+    location_resolver.save(geolocs_file.resolve())
+  else:
+    print("restore geonames from",geolocs_file)
+    location_resolver = GeonamesWikidataResolver().load(geolocs_file.resolve())
+  
   with open(args.csv[0], 'r') as _csv:
     easydb = csv.DictReader(_csv, delimiter=';', quotechar='"')
     n_fields = len(easydb.fieldnames)
+    for row in easydb:
+      assert(len(row.keys()) == n_fields)
+    print("syntactic check of csv passed")
+    _csv.seek(0) # reset file pointer, re-iterater over the file
+    next(easydb) # skip header
     
-    # 1. create persons
+    
+    print("synching persons, projects, institutions, and identifiers")
     persons = set()
     projects = set()
     for row in easydb:
-      assert(len(row.keys()) == n_fields)
       p = row['creator#_standard#de-DE']
       if p != '':
         persons.add(p)
@@ -48,39 +66,48 @@ def main(args):
     EntitySync('institutions', ['Collections@UBT'], api, known_entities)
     es.update()
     known_entities = es.get_known_entities()
-    EntitySync('identifiers', ['Collections@UBT Identifier', 'Collections@UBT Inventory Number'], api, known_entities)
-    es.update()
-    known_entities = es.get_known_entities()
+    known_objects = EntitySync("easydb_objects", None, api)._wisski_entities
     
-    # add project
+    return
     
     _csv.seek(0) # reset file pointer, re-iterater over the file
     next(easydb) # skip header
+    print("start intake of data now")
     errors = {}
     success = 0
     for i,row in enumerate(easydb):
-      assert(len(row.keys()) == n_fields)
-      ent = EasydbEntity(row, api, known_entities)
+      ent = EasydbEntity(row, known_objects = known_objects, location_resolver=location_resolver, api=api, known_entities=known_entities)
       known_entities = ent.get_known_entities()
-      # ~ print(known_entities)
-      # ~ print(ent.staging())
-      # ~ print(json.dumps(ent.staging(), indent=2))
+      if ent.get_already_in_db():
+        errors[str(i)] = row
+        print("error in row",i+1,"(already in db)")
+        continue
       try:
         ent.upload()
         success += 1
         print("successfully written",i+1)
-      except:
+      except KeyboardInterrupt:
+        print('Interrupted')
+        try:
+            save_errors(errors)
+            sys.exit(130)
+        except SystemExit:
+            save_errors(errors)
+            os._exit(130)
+      except Exception as e:
         errors[str(i)] = row
-        print("error in row",i+1)
-      if i == 3:
+        save_errors(errors)
+        print("error in row",i+1,e.get_message())
+        sleep(1)
+      if success == READ_IN_MAX:
         break
     
-    with open('ERRORS.json', 'w') as out:
-      out.write(json.dumps(errors))
-    
+    save_errors(errors)
     print(f"errors: {len(errors)}\tsuccess: {success}")
     
-
+def save_errors(errors):
+  with open('ERRORS.json', 'w') as out:
+    out.write(json.dumps(errors))
 
 def get_log_filename(out_dir, base, ext='.log'):
   def get_basename(log_id, base, ext='.log'):
