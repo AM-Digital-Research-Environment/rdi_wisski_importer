@@ -43,6 +43,10 @@ class fieldfunction(GeneralEntity):
             'sponsor': {
                 'bundle': self._bundle.get('g_funding_body'),
                 'field': self._field.get('f_funding_body_name')
+            },
+            'place': {
+                'bundle': self._bundle.get('g_place'),
+                'field': self._field.get('f_place_name')
             }
         }
 
