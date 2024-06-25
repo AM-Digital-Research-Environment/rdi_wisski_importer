@@ -150,7 +150,12 @@ class DocumentEntity(GeneralEntity):
         if not self._document.get('location').get('current') == []:
             self._research_data_item[
                 self._field.get('f_research_data_item_located_at')
-            ] = self._document.get('location').get('current')
+            ] = entity_list_generate(
+                value_list=self._document.get('location').get('current'),
+                query_name=self._query.get('place'),
+                exception_function=fieldfunction('place').exception,
+                with_exception=True
+            )
         else:
             pass
 
