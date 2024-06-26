@@ -91,6 +91,9 @@ def entity_list_generate(value_list, query_name, exception_function: Callable, w
 
 def try_func(value, func):
     try:
-        return func(value)
+        if func(value) is None:
+            return value
+        else:
+            return func(value)
     except NameError:
         return value
