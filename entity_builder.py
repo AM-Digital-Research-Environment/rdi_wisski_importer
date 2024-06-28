@@ -179,8 +179,12 @@ class DocumentEntity(GeneralEntity):
     # Target Audience
     def target_audience(self):
         if not self._document.get('targetAudience') == []:
-            self._research_data_item[self._field.get('f_research_data_target_audience')] = self._document.get(
-                "targetAudience")
+            self._research_data_item[self._field.get('f_research_data_target_audience')] = entity_list_generate(
+                value_list=self._document.get('targetAudience'),
+                query_name=self._query.get('audience'),
+                exception_function=fieldfunction('audience').exception,
+                with_exception=True
+            )
         else:
             pass
 
@@ -387,7 +391,7 @@ class DocumentEntity(GeneralEntity):
         self.country()
         self.region()
         self.subregion()
-        self.currentlocation()
+        #self.currentlocation()
         self.role()
         self.titles()
         self.dateinfo()
