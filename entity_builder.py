@@ -79,7 +79,7 @@ class DocumentEntity(GeneralEntity):
 
     # Language
     def langauge(self):
-        if not self._document.get('langauge') == []:
+        if not self._document.get('language') == []:
             document_languages = [try_func(l, lambda x: self._language.get(x)) for l in self._document.get('language')]
             self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
                 document_languages,
