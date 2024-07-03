@@ -47,6 +47,10 @@ class fieldfunction(GeneralEntity):
             'place': {
                 'bundle': self._bundle.get('g_place'),
                 'field': self._field.get('f_place_name')
+            },
+            'audience': {
+                'bundle': self._bundle.get('g_audience'),
+                'field': self._field.get('f_audience_description')
             }
         }
 
