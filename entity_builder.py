@@ -78,8 +78,8 @@ class DocumentEntity(GeneralEntity):
         return entity_list
 
     # Language
-    def language(self):
-        if not self._document.get('language') == []:
+    def langauge(self):
+        if not self._document.get('langauge') == []:
             document_languages = [try_func(l, lambda x: self._language.get(x)) for l in self._document.get('language')]
             self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
                 document_languages,
@@ -376,7 +376,7 @@ class DocumentEntity(GeneralEntity):
     # Staged Values
 
     def staging(self):
-        self.language()
+        self.langauge()
         self.citation()
         self.url_link()
         self.copyright()
@@ -387,7 +387,7 @@ class DocumentEntity(GeneralEntity):
         self.country()
         self.region()
         self.subregion()
-        #self.currentlocation()
+        self.currentlocation()
         self.role()
         self.titles()
         self.dateinfo()
@@ -398,10 +398,9 @@ class DocumentEntity(GeneralEntity):
         return self._research_data_item
 
     def upload(self):
-        stage = self.staging()
         self._api.save(Entity(
             api=self._api,
-            fields=stage,
+            fields=self.staging(),
             bundle_id=self._bundle.get('g_research_data_item')
         ))
 
