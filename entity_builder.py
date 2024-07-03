@@ -487,4 +487,4 @@ class EntitySync(GeneralEntity):
         else:
             self._bundle_name = self._sync_field_name
             self.updator()
-        return self.checker()
+        return "Update Complete!"
