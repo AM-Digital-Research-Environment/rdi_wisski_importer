@@ -78,8 +78,8 @@ class DocumentEntity(GeneralEntity):
         return entity_list
 
     # Language
-    def langauge(self):
-        if not self._document.get('langauge') == []:
+    def language(self):
+        if not self._document.get('language') == []:
             document_languages = [try_func(l, lambda x: self._language.get(x)) for l in self._document.get('language')]
             self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
                 document_languages,
@@ -179,8 +179,12 @@ class DocumentEntity(GeneralEntity):
     # Target Audience
     def target_audience(self):
         if not self._document.get('targetAudience') == []:
-            self._research_data_item[self._field.get('f_research_data_target_audience')] = self._document.get(
-                "targetAudience")
+            self._research_data_item[self._field.get('f_research_data_target_audience')] = entity_list_generate(
+                value_list=self._document.get('targetAudience'),
+                query_name=self._query.get('audience'),
+                exception_function=fieldfunction('audience').exception,
+                with_exception=True
+            )
         else:
             pass
 
@@ -387,7 +391,7 @@ class DocumentEntity(GeneralEntity):
         self.country()
         self.region()
         self.subregion()
-        self.currentlocation()
+        #self.currentlocation()
         self.role()
         self.titles()
         self.dateinfo()
@@ -410,56 +414,77 @@ class DocumentEntity(GeneralEntity):
 
 class EntitySync(GeneralEntity):
 
-    def __init__(self, mongo_auth_string, sync_field):
+    def __init__(self, mongo_auth_string: str, sync_field: str="all"):
 
         # Field name initialisation
+        self._mongo_auth_string = mongo_auth_string
         self._sync_field_name = sync_field
+        self._bundle_name = None
 
         # Super Class
         super().__init__()
 
-        # WissKI Query Dict
-        self._wisski_query = {
-            "persons": "personlist",
-            "institutions": "institutionlist"
+        # Bundle dictionary
+        self._bundle_dict = {
+            "persons": {
+                "query": "personlist",
+                "field": "f_person_name",
+                "group": "g_person"
+            },
+            "institutions": {
+                "query": "institutionlist",
+                "field": "f_institution_name",
+                "group": "g_institution"
+            }
         }
 
-        # WissKI Path field Dict
+    # MongoDB
+    def mongo_list(self):
+        mongo_client = MongoClient(self._mongo_auth_string)
+        return mongo_client['dev'][self._bundle_name].distinct('name')
 
-        self._wisski_path_field = {
-            "persons": "f_person_name",
-            "institutions": "f_institution_name",
-        }
+    # WissKI Data
+    def wisski_entities(self):
+        return list(entity_uri(search_value="",
+                               query_string=self._query.get(self._bundle_dict.get(self._bundle_name)['query']),
+                               return_format='csv', value_input=False).iloc[:, 0])
 
-        # WissKI Path Group Dict
-
-        self._wisski_path_group = {
-            "persons": "g_person",
-            "institutions": "g_institution"
-        }
-
-        # MongoDB
-        self._mongo_client = MongoClient(mongo_auth_string)
-        self._mongo_list = self._mongo_client['dev'][self._sync_field_name].distinct('name')
-
-        # WissKI Data
-        self._wisski_entities = list(entity_uri(search_value="",
-                                                query_string=self._query.get(self._wisski_query[self._sync_field_name]),
-                                                return_format='csv', value_input=False).iloc[:, 0])
-
-    def check_missing(self):
+    # Check missing values
+    def checker(self):
         missing_values = []
-        for value in self._mongo_list:
-            if value not in self._wisski_entities:
+        for value in self.mongo_list():
+            if value not in self.wisski_entities():
                 missing_values.append(value)
         return missing_values
 
-    def update(self):
+    def updator(self):
         if not self.check_missing() == []:
             for entity in self.check_missing():
                 entity_value = {
-                    self._field.get(self._wisski_path_field.get(self._sync_field_name)): [entity]
+                    self._field.get(self._bundle_dict.get(self._bundle_name)['field']): [entity]
                 }
                 entity_object = Entity(api=self._api, fields=entity_value,
-                                       bundle_id=self._bundle.get(self._wisski_path_group.get(self._sync_field_name)))
+                                       bundle_id=self._bundle.get(self._bundle_dict.get(self._bundle_name)['group']))
                 self._api.save(entity_object)
+
+    # Returns missing values
+    def check_missing(self):
+        if self._sync_field_name == 'all':
+            for key in self._bundle_dict.keys():
+                self._bundle_name = key
+                print(self.checker())
+        else:
+            self._bundle_name = self._sync_field_name
+            return self.checker()
+
+    # Updates missing values
+    def update(self):
+        if self._sync_field_name == 'all':
+            for key in self._bundle_dict.keys():
+                self._bundle_name = key
+                self.checker()
+            return f"Updated bundle {key}"
+        else:
+            self._bundle_name = self._sync_field_name
+            self.updator()
+        return self.checker()
