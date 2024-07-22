@@ -1,13 +1,7 @@
-# Libraries
-import numpy as np
-# MongoDB
-from pymongo import MongoClient
-
 # Data Wrangling
 import pandas as pd
 
 # Data Parsing
-import json
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -43,14 +37,20 @@ class DocumentEntity(GeneralEntity):
                 entity_uri(self._document.get('typeOfResource'), self._query.get('typeofresource'))],
 
             # Field for Identifiers (Mandatory Field)
-            self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
+            self._bundle.get('g_research_data_item_identifier'): self.identifier_entities,
 
             # Project (Mandatory Field)
             self._field.get('f_research_data_item_project'): [
                 entity_uri(self._document.get('project')['id'], self._query.get('projectid'))]
         }
-    # Entity list of identifiers
+    # Collection
+    # TODO: Incorporate Collection Membership
 
+    def collection(self):
+        pass
+
+    # Entity list of identifiers
+    @property
     def identifier_entities(self):
 
         # Initialising DRE Identifier
@@ -171,7 +171,8 @@ class DocumentEntity(GeneralEntity):
         if not self._document.get('accessCondition')['rights'] == []:
             self._research_data_item[self._field.get('f_research_data_item_copyright')] = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
-                self._query.get('license')
+                self._query.get('license'),
+
             )
         else:
             pass
@@ -231,7 +232,7 @@ class DocumentEntity(GeneralEntity):
                            self._field.get('f_research_data_item_apers_role'): [sponsor_role]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
-
+        # TODO: Change to incorporate Person, Actor or Group
         for name in self._document.get('name'):
             name_entity_list.append(
                 Entity(api=self._api,
@@ -249,9 +250,13 @@ class DocumentEntity(GeneralEntity):
         self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
 
     # Title Information
+    # TODO: Separate 'Main' and 'Alternative' titles
     def titles(self):
         title_entity_list = []
         for title in self._document.get('titleInfo'):
+            if title.get('title_type') == 'main':
+                self._research_data_item[self._field.get('f_research_data_item_title_main')] = [title.get(title)]
+        else:
             title_entity_list.append(
                 Entity(api=self._api,
                        fields={
@@ -293,6 +298,7 @@ class DocumentEntity(GeneralEntity):
             pass
 
     # Technical Description
+    # TODO: Change structure to match the embedded structure
 
     def physicaldesc(self):
         pd_dict = self._document.get('physicalDescription')
@@ -391,7 +397,7 @@ class DocumentEntity(GeneralEntity):
         self.country()
         self.region()
         self.subregion()
-        #self.currentlocation()
+        self.currentlocation()
         self.role()
         self.titles()
         self.dateinfo()
@@ -415,7 +421,7 @@ class DocumentEntity(GeneralEntity):
 
 class EntitySync(GeneralEntity):
 
-    def __init__(self, mongo_auth_string: str, sync_field: str="all"):
+    def __init__(self, mongo_auth_string: str, sync_field: str = "all"):
 
         # Field name initialisation
         self._mongo_auth_string = mongo_auth_string
