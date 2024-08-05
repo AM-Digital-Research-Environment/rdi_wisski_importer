@@ -2,6 +2,7 @@
 import pandas as pd
 
 # Data Parsing
+import re
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -44,10 +45,22 @@ class DocumentEntity(GeneralEntity):
                 entity_uri(self._document.get('project')['id'], self._query.get('projectid'))]
         }
     # Collection
-    # TODO: Incorporate Collection Membership
 
     def collection(self):
-        pass
+        if not self._document.get('collection') == []:
+            # Collection fields
+            collection_fields = {
+                self._field['f_res_item_collection']: entity_list_generate(self._document.get('collection'),
+                                                                           query_name=self._query.get('collection'))}
+            # Collection entity
+            collection_entity = Entity(
+                api=self._api, fields=collection_fields,
+                bundle_id=self._bundle.get('g_res_item_collection'))
+            # Initialising collection field
+            self._research_data_item["g_res_item_collection"] = [collection_entity]
+        else:
+            pass
+
 
     # Entity list of identifiers
     @property
@@ -232,14 +245,26 @@ class DocumentEntity(GeneralEntity):
                            self._field.get('f_research_data_item_apers_role'): [sponsor_role]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
-        # TODO: Change to incorporate Person, Actor or Group
         for name in self._document.get('name'):
+            # Reconciling the entity type (person, group or institution)
+            if re.search("\s\[group\]", name.get('name')):
+                # Todo: Add 'group' in sparql_query dict
+                name_label = re.split("\s\[group\]", name.get('name'))[0]
+                qualifier = "group"
+            elif re.search("\s\[institution\]", name.get('name')):
+                # Todo: Add 'institution' in sparql_query dict
+                name_label = re.split("\s\[institution\]", name.get('name'))[0]
+                qualifier = "institution"
+            else:
+                name_label = name.get(name)
+                qualifier = "person"
+
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
                            self._field.get('f_research_data_item_role_holder'): [entity_uri(
-                               search_value=name.get('name'),
-                               query_string=self._query.get('person')
+                               search_value= name_label,
+                               query_string= self._query.get(qualifier)
                            )],
                            self._field.get('f_research_data_item_apers_role'): [entity_uri(
                                search_value=name.get('role'),
@@ -250,7 +275,6 @@ class DocumentEntity(GeneralEntity):
         self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
 
     # Title Information
-    # TODO: Separate 'Main' and 'Alternative' titles
     def titles(self):
         title_entity_list = []
         for title in self._document.get('titleInfo'):
@@ -359,6 +383,7 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
     # Subject
+    # Todo: Change query from label to URI
     def subject(self):
         if not len(self._document.get('subject')) == 0:
             self._research_data_item[self._field.get('f_research_data_item_subject')] = entity_list_generate(
@@ -371,7 +396,6 @@ class DocumentEntity(GeneralEntity):
             pass
 
     # Tags
-    # TODO: Tags Values
     def tags(self):
         if not len(self._document.get('tags')) == 0:
             self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
