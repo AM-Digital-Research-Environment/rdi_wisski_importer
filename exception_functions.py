@@ -17,6 +17,7 @@ class fieldfunction(GeneralEntity):
         super().__init__()
 
         # Field Dictionary
+        # Todo: add subject dict along with URIs
         self._path_dict = {
             'language': {
                 'bundle': self._bundle.get('g_iso_language'),
