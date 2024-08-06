@@ -385,15 +385,51 @@ class DocumentEntity(GeneralEntity):
     # Subject
     # Todo: Change query from label to URI
     def subject(self):
+        """
+            if not len(self._document.get('subject')) == 0:
+                self._research_data_item[self._field.get('f_research_data_item_subject')] = entity_list_generate(
+                    value_list=self._document.get('subject'),
+                    query_name=self._query.get('subject'),
+                    exception_function=fieldfunction('subject').exception,
+                    with_exception=True
+                )
+            else:
+                pass
+        """
         if not len(self._document.get('subject')) == 0:
-            self._research_data_item[self._field.get('f_research_data_item_subject')] = entity_list_generate(
-                value_list=self._document.get('subject'),
-                query_name=self._query.get('subject'),
-                exception_function=fieldfunction('subject').exception,
-                with_exception=True
-            )
+            subject_list = []
+            for sub in self._document.get('subject'):
+                by_uri = entity_uri(sub.get('uri'), self._query.get('subjectURI'))
+                by_label = entity_uri(sub.get('origLabel'), self._query.get('subjectLabel'))
+                if by_uri is not None:
+                    subject_list.append(by_uri)
+                elif by_label is not None:
+                    subject_list.append(by_label)
+                else:
+                    subject_fields = {}
+                    if not pd.isna(sub.get('uri')):
+                        subject_fields[self._field.get('f_subject_url')] = sub.get('uri')
+                    else:
+                        pass
+                    if not pd.isna(sub.get('authority')):
+                        # Authority must be in system already
+                        authority_uri = entity_uri(sub.get('authority'), query_string=self._query.get('authority'))
+                        subject_fields[self._field.get('f_subject_authority')] = authority_uri
+                    else:
+                        pass
+                    if not pd.isna(sub.get('authLabel')):
+                        subject_fields[self._field.get('f_subject_tag')] = sub.get('authLabel')
+                    else:
+                        subject_fields[self._field.get('f_subject_tag')] = sub.get('origLabel')
+
+                    subject_list.append(
+                        Entity(api=self._api, fields=subject_fields,
+                               bundle_id=self._bundle.get('g_subject'))
+                    )
+            self._research_data_item[self._field.get('f_research_data_item_subject')] = subject_list
         else:
             pass
+
 
     # Tags
     def tags(self):
