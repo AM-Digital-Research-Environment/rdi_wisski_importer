@@ -112,37 +112,38 @@ class DocumentEntity(GeneralEntity):
 
     # Geographic Location
     # Country (level 1)
-    def country(self):
-        if not pd.isna(self._origin.get('l1')):
-            self._research_data_item[self._field.get('f_research_data_creat_country')] = [
-                entity_uri(
-                    search_value=self._origin.get('l1'),
-                    query_string=self._query.get('country')
-                )
-            ]
-        else:
-            pass
+    def originlocation(self):
+        for loc_obj in self._origin:
+            if not pd.isna(loc_obj.get('l1')) and loc_obj.get('l1') != "":
+                self._research_data_item[self._field.get('f_research_data_creat_country')] = [
+                    entity_uri(
+                        search_value=loc_obj.get('l1'),
+                        query_string=self._query.get('country')
+                    )
+                ]
+            else:
+                pass
 
     # Region (level 2)
-    def region(self):
-        if not pd.isna(self._origin.get('l2')):
-            region_uri = entity_uri(
-                search_value={'level_0': self._origin.get('l2'),
-                              'level_1': self._origin.get('l1')},
-                query_string=self._query.get('region'),
-                conditional=True)
-            self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
-            return region_uri
-        else:
-            pass
+#   def region(self):
+            if not pd.isna(loc_obj.get('l2')) and loc_obj.get('l2') != "":
+                region_uri = entity_uri(
+                    search_value={'level_0': loc_obj.get('l2'),
+                                  'level_1': self._origin.get('l1')},
+                    query_string=self._query.get('region'),
+                    conditional=True)
+                self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
+#                return region_uri
+            else:
+                pass
 
     # Subregion
-    def subregion(self):
-        if not pd.isna(self._origin.get('l3')):
+#    def subregion(self):
+        if not pd.isna(loc_obj.get('l3')) and loc_obj.get('l3') != "":
             subregion = entity_uri(
                 search_value={
-                    'level_0': self._origin.get('l3'),
-                    'level_1': self._origin.get('l2')
+                    'level_0': loc_obj.get('l3'),
+                    'level_1': loc_obj.get('l2')
                 },
                 query_string=self._query.get('subregion'),
                 conditional=True
@@ -151,8 +152,8 @@ class DocumentEntity(GeneralEntity):
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
             elif subregion is None:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                    fieldfunction('subregion').exception(entity_value=self._origin.get('l3'),
-                                                         qualifier_value=self.region(),
+                    fieldfunction('subregion').exception(entity_value=loc_obj.get('l3'),
+                                                         qualifier_value=region_uri,
                                                          with_qualifier=True)
                 ]
             else:
@@ -322,34 +323,44 @@ class DocumentEntity(GeneralEntity):
             pass
 
     # Technical Description
-    # TODO: Change structure to match the embedded structure
 
     def physicaldesc(self):
         pd_dict = self._document.get('physicalDescription')
+
+        resource_type_dict = {
         # Type (Mandatory Field)
-        self._research_data_item[self._field.get('f_reseach_data_item_res_type')] = [
-            self._document.get('physicalDescription').get('type')
-        ]
+            self._field.get('f_reseach_data_item_res_type'): [
+                self._document.get('physicalDescription').get('type')
+            ]
+        }
         # Method
         if not pd.isna(pd_dict.get('method')):
-            self._research_data_item[self._field.get('f_reseach_data_item_res_t_method')] = [pd_dict.get('method')]
+            resource_type_dict[self._field.get('f_reseach_data_item_res_t_method')] = [pd_dict.get('method')]
         else:
             pass
         # Description
         if not len(pd_dict.get('desc')) == 0:
-            self._research_data_item[self._field.get('f_reseach_data_item_res_t_desc')] = pd_dict.get('desc')
+            resource_type_dict[self._field.get('f_reseach_data_item_res_t_desc')] = pd_dict.get('desc')
         else:
             pass
+        # Technical Description Note
+        if not len(pd_dict.get('note')) == 0:
+            resource_type_dict[self._field.get('f_reseach_data_item_res_t_descr')] = pd_dict.get('note')
+        else:
+            pass
+
+        self._research_data_item[self._bundle.get('g_reseach_data_item_res_type')] = [Entity(
+            api=self._api,
+            fields=resource_type_dict,
+            bundle_id=self._bundle.get('g_reseach_data_item_res_type')
+        )]
+
         # Technical Property
         if not len(pd_dict.get('tech')) == 0:
             self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = pd_dict.get('tech')
         else:
             pass
-        # Technical Description Note
-        if not len(pd_dict.get('note')) == 0:
-            self._research_data_item[self._field.get('f_reseach_data_item_res_t_descr')] = pd_dict.get('note')
-        else:
-            pass
+
 
     # Genre
 
@@ -383,7 +394,6 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
     # Subject
-    # Todo: Change query from label to URI
     def subject(self):
         """
             if not len(self._document.get('subject')) == 0:
@@ -454,9 +464,10 @@ class DocumentEntity(GeneralEntity):
         self.abstract()
         self.tabel_of_content()
         self.note()
-        self.country()
-        self.region()
-        self.subregion()
+#        self.country()
+#        self.region()
+#        self.subregion()
+        self.originlocation()
         self.currentlocation()
         self.role()
         self.titles()
