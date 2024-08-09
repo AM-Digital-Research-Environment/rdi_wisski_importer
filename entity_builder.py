@@ -247,25 +247,12 @@ class DocumentEntity(GeneralEntity):
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
         for name in self._document.get('name'):
-            # Reconciling the entity type (person, group or institution)
-            if re.search("\s\[group\]", name.get('name')):
-                # Todo: Add 'group' in sparql_query dict
-                name_label = re.split("\s\[group\]", name.get('name'))[0]
-                qualifier = "group"
-            elif re.search("\s\[institution\]", name.get('name')):
-                # Todo: Add 'institution' in sparql_query dict
-                name_label = re.split("\s\[institution\]", name.get('name'))[0]
-                qualifier = "institution"
-            else:
-                name_label = name.get(name)
-                qualifier = "person"
-
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
                            self._field.get('f_research_data_item_role_holder'): [entity_uri(
-                               search_value= name_label,
-                               query_string= self._query.get(qualifier)
+                               search_value=name.get('name').get('label'),
+                               query_string=self._query.get(name.get('name').get('qualifier'))
                            )],
                            self._field.get('f_research_data_item_apers_role'): [entity_uri(
                                search_value=name.get('role'),
