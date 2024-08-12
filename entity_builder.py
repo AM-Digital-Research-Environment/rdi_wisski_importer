@@ -267,7 +267,7 @@ class DocumentEntity(GeneralEntity):
         title_entity_list = []
         for title in self._document.get('titleInfo'):
             if title.get('title_type') == 'main':
-                self._research_data_item[self._field.get('f_research_data_item_title_main')] = [title.get(title)]
+                self._research_data_item[self._field.get('f_research_data_item_title_main')] = [title.get('title')]
         else:
             title_entity_list.append(
                 Entity(api=self._api,
