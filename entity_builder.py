@@ -490,15 +490,26 @@ class EntitySync(GeneralEntity):
 
         # Bundle dictionary
         self._bundle_dict = {
-            "persons": {
-                "query": "personlist",
-                "field": "f_person_name",
-                "group": "g_person"
-            },
             "institutions": {
                 "query": "institutionlist",
                 "field": "f_institution_name",
                 "group": "g_institution"
+            },
+            "persons": {
+                "query": "personlist",
+                "field": "f_person_name",
+                "field1": "f_person_affiliation",
+                "group": "g_person"
+            },
+            # Todo: Add group list query
+            "groups": {
+                "query": "grouplist",
+                "field": "f_person_name",
+                "field1": "f_person_affiliation",
+                "group": "g_person"
+            },
+            # Todo: Add collection list query and collection dictionary
+            "collections": {
             }
         }
 
