@@ -18,7 +18,7 @@ class GeneralEntity:
         self._language = json_file("dicts/lang.json")
 
         # WissKI Auth
-        self._api_url = "http://www.wisski.uni-bayreuth.de/wisski/api/v0"
+        self._api_url = "https://www.wisski.uni-bayreuth.de/wisski/api/v0"
         self._auth = ("***REMOVED***", "***REMOVED***")
         self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
         self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
