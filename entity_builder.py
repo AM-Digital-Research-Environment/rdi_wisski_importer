@@ -504,12 +504,15 @@ class EntitySync(GeneralEntity):
             # Todo: Add group list query
             "groups": {
                 "query": "grouplist",
-                "field": "f_person_name",
-                "field1": "f_person_affiliation",
-                "group": "g_person"
+                "field": "f_group_name",
+                "group": "g_group"
             },
             # Todo: Add collection list query and collection dictionary
             "collections": {
+                "query": "collectionlist",
+                "field": "f_collection_title",
+                "field1": "f_collection_identifier",
+                "group": "g_collection"
             }
         }
 
