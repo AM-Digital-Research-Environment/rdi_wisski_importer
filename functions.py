@@ -37,7 +37,7 @@ def entity_uri(search_value: str | dict[str, str],
                value_input=True,
                conditional=False) -> str | object | None:
     format_dict = {'json': JSON, 'csv': CSV}
-    sparql = SPARQLWrapper("***REMOVED***:7200/repositories/wisski_2024-07-11")
+    sparql = SPARQLWrapper("***REMOVED******REMOVED***")
     sparql.setReturnFormat(format_dict[return_format])
     sparql.setHTTPAuth('BASIC')
     sparql.setCredentials("***REMOVED***", "***REMOVED***")
