@@ -3,6 +3,7 @@ import pandas as pd
 
 # Data Parsing
 import re
+import jmespath as jm
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -61,8 +62,8 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
 
-
     # Entity list of identifiers
+
     @property
     def identifier_entities(self):
 
@@ -348,7 +349,6 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
 
-
     # Genre
 
     def genre(self):
@@ -427,7 +427,6 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
 
-
     # Tags
     def tags(self):
         if not len(self._document.get('tags')) == 0:
@@ -484,6 +483,9 @@ class EntitySync(GeneralEntity):
         self._mongo_auth_string = mongo_auth_string
         self._sync_field_name = sync_field
         self._bundle_name = None
+        self._single_fields = ['institutions', 'groups']
+        self._double_fields = ['persons', 'collections']
+        self._double_fields_holder = []
 
         # Super Class
         super().__init__()
@@ -498,20 +500,20 @@ class EntitySync(GeneralEntity):
             "persons": {
                 "query": "personlist",
                 "field": "f_person_name",
-                "field1": "f_person_affiliation",
+                "alt_field": "f_person_affiliation",
+                "alt_field_label": "affiliation",
                 "group": "g_person"
             },
-            # Todo: Add group list query
             "groups": {
                 "query": "grouplist",
                 "field": "f_group_name",
                 "group": "g_group"
             },
-            # Todo: Add collection list query and collection dictionary
             "collections": {
                 "query": "collectionlist",
                 "field": "f_collection_title",
-                "field1": "f_collection_identifier",
+                "alt_field": "f_collection_identifier",
+                "alt_field_label": "identifier",
                 "group": "g_collection"
             }
         }
@@ -519,16 +521,22 @@ class EntitySync(GeneralEntity):
     # MongoDB
     def mongo_list(self):
         mongo_client = MongoClient(self._mongo_auth_string)
-        return mongo_client['dev'][self._bundle_name].distinct('name')
+        if self._sync_field_name in self._single_fields:
+            return mongo_client['dev'][self._bundle_name].distinct('name')
+        elif self._sync_field_name in self._double_fields:
+            names_list = mongo_client['dev'][self._bundle_name].distinct('name')
+            self._double_fields_holder = list(mongo_client['dev'][self._bundle_name].find())
+            return names_list
 
     # WissKI Data
+
     def wisski_entities(self):
         return list(entity_uri(search_value="",
                                query_string=self._query.get(self._bundle_dict.get(self._bundle_name)['query']),
                                return_format='csv', value_input=False).iloc[:, 0])
 
     # Check missing values
-    def checker(self):
+    def checker(self) -> list | list[dict]:
         missing_values = []
         for value in self.mongo_list():
             if value not in self.wisski_entities():
@@ -541,6 +549,10 @@ class EntitySync(GeneralEntity):
                 entity_value = {
                     self._field.get(self._bundle_dict.get(self._bundle_name)['field']): [entity]
                 }
+                if self._sync_field_name in self._double_fields:
+                    entity_value[self._field.get(self._bundle_dict.get(self._bundle_name)['alt_field'])] = [
+                        jm.search(f"[?name=='{entity}'].identifier")[0]
+                    ]
                 entity_object = Entity(api=self._api, fields=entity_value,
                                        bundle_id=self._bundle.get(self._bundle_dict.get(self._bundle_name)['group']))
                 self._api.save(entity_object)
