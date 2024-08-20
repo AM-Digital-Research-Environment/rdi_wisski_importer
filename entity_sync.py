@@ -1,7 +1,15 @@
+# Data Wrangling
+import pandas as pd
+
 # Data Parsing
 import jmespath as jm
 
+# Local Libraries
+from auth import *
+from functions import entity_uri
+
 # Class for Associated Entities Synchronisation
+
 
 class EntitySync(GeneralEntity):
     """
@@ -15,18 +23,13 @@ class EntitySync(GeneralEntity):
 
     """
 
-
-    def __init__(self, mongo_auth_string: str, sync_field: str = "all"):
+    def __init__(self, mongo_auth_string: str, sync_field: str):
 
         # Field name initialisation
-        self._mongo_auth_string = mongo_auth_string
         self._sync_field_name = sync_field
-        self._mongo_client = MongoClient(self._mongo_auth_string)
-        self._bundle_name = None
+        self._collection = MongoClient(mongo_auth_string)['dev'][self._sync_field_name]
         self._single_fields = ['institutions', 'groups']
         self._double_fields = ['persons', 'collections']
-        self._double_fields_holder = []
-        self._staged_values = []
 
         # Super Class
         super().__init__()
@@ -59,74 +62,68 @@ class EntitySync(GeneralEntity):
             }
         }
 
-    # MongoDB
-    def mongo_list(self):
-        if self._sync_field_name in self._single_fields:
-            return self._mongo_client['dev'][self._bundle_name].distinct('name')
-        elif self._sync_field_name in self._double_fields:
-            names_list = self._mongo_client['dev'][self._bundle_name].distinct('name')
-            self._double_fields_holder = list(self._mongo_client['dev'][self._bundle_name].find())
-            return names_list
+    # MongoDB List
 
-    # WissKI Data
-    def wisski_entities(self):
+    def mongo_list(self):
+        return list(self._collection.find())
+
+    # WissKI Entity List
+
+    def wisski_list(self):
         return list(entity_uri(search_value="",
-                               query_string=self._query.get(self._bundle_dict.get(self._bundle_name)['query']),
+                               query_string=self._query.get(self._bundle_dict.get(self._sync_field_name)['query']),
                                return_format='csv', value_input=False).iloc[:, 0])
 
-    # Check missing values
-    def checker(self) -> list | list[dict]:
-        missing_values = []
-        for value in self.mongo_list():
-            if value not in self.wisski_entities():
-                missing_values.append(value)
-        return missing_values
-    def updator(self):
-        if not self.check_missing() == []:
-            for entity in self.check_missing():
-                entity_value = {
-                    self._field.get(self._bundle_dict.get(self._bundle_name)['field']): [entity]
-                }
-                if self._sync_field_name in self._double_fields:
-                    entity_value[self._field.get(self._bundle_dict.get(self._bundle_name)['alt_field'])] = [
-                        jm.search(f"[?name=='{entity}'].identifier")[0]
-                    ]
-                self._staged_values.append(entity_value)
-                entity_object = Entity(api=self._api, fields=entity_value,
-                                       bundle_id=self._bundle.get(self._bundle_dict.get(self._bundle_name)['group']))
-                self._api.save(entity_object)
-
-    # Returns missing values
-    def check_missing(self):
-        if self._sync_field_name == 'all':
-            for key in self._bundle_dict.keys():
-                self._bundle_name = key
-                print(self.checker())
-        else:
-            self._bundle_name = self._sync_field_name
-            return self.checker()
+    def missing_entities(self):
+        missing = []
+        wisskiList = self.wisski_list()
+        mongo_response = self.mongo_list()
+        mongoList = jm.search("[].name", mongo_response)
+        for entity in mongoList:
+            if entity not in wisskiList:
+                missing.append(jm.search(f"[?name == '{entity}']", mongo_response)[0])
+            else:
+                pass
+        return missing
 
     def staged(self):
-        if not self.check_missing() == []:
-            for entity in self.check_missing():
-                entity_value = {
-                    self._field.get(self._bundle_dict.get(self._bundle_name)['field']): [entity]
-                }
-                if self._sync_field_name in self._double_fields:
-                    entity_value[self._field.get(self._bundle_dict.get(self._bundle_name)['alt_field'])] = [
-                        jm.search(f"[?name=='{entity}'].identifier")[0]
+        entity_values_list = []
+        entity_list = []
+        field_dict = self._bundle_dict.get(self._sync_field_name)
+        for entity in self.missing_entities():
+            entity_value = {
+                self._field.get(field_dict.get('field')): [entity.get("name")]
+            }
+            if self._sync_field_name in self._double_fields:
+                if self._sync_field_name == 'persons':
+                    if entity.get(field_dict.get('alt_field_label')):
+                        entity_value[self._field.get(field_dict.get('alt_field'))] = entity_list_generate(
+                            value_list=entity.get(field_dict.get('alt_field_label')),
+                            query_name=self._query.get('institution')
+                        )
+                else:
+                    entity_value[self._field.get(field_dict.get('alt_field'))] = [
+                        entity.get(field_dict.get('alt_field_label'))
                     ]
-                self._staged_values.append(entity_value)
-        return self._staged_values
+            else:
+                pass
 
-    # Updates missing values
+            # Appending list of Entity Values
+            entity_values_list.append(entity_value)
+
+            # Creating entity objects
+            entity_object = Entity(
+                api=self._api,
+                fields=entity_value,
+                bundle_id=self._bundle.get(field_dict.get('group'))
+            )
+
+            # Appending entity object list
+            entity_list.append(entity_object)
+
+        return {'entities': entity_list, 'values': entity_values_list}
+
+    # Update function
     def update(self):
-        if self._sync_field_name == 'all':
-            for key in self._bundle_dict.keys():
-                self._bundle_name = key
-                self.checker()
-            return f"Updated bundle {key}"
-        else:
-            self._bundle_name = self._sync_field_name
-            self.updator()
-        return "Update Complete!"
+        for entity_obj in self.staged()['entities']:
+            self._api.save(entity_obj)
