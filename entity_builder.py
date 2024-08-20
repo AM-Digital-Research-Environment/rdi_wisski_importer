@@ -245,12 +245,18 @@ class DocumentEntity(GeneralEntity):
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
         for name in self._document.get('name'):
+            qualifier = name.get('name').get('qualifier')
+            ass_entity_type = {
+                'person': 'f_research_data_item_role_holder',
+                'group': 'f_research_data_item_role_hldr_g',
+                'institution': 'f_research_data_item_role_hldr_i'
+            }
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
-                           self._field.get('f_research_data_item_role_holder'): [entity_uri(
+                           self._field.get(ass_entity_type.get(qualifier)): [entity_uri(
                                search_value=name.get('name').get('label'),
-                               query_string=self._query.get(name.get('name').get('qualifier'))
+                               query_string=self._query.get(qualifier)
                            )],
                            self._field.get('f_research_data_item_apers_role'): [entity_uri(
                                search_value=name.get('role'),
@@ -447,7 +453,7 @@ class DocumentEntity(GeneralEntity):
         self.language()
         self.citation()
         self.originlocation()
-        self.currentlocation()
+        #self.currentlocation()
         self.url_link()
         self.copyright()
         self.target_audience()
