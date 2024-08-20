@@ -4,6 +4,17 @@ import jmespath as jm
 # Class for Associated Entities Synchronisation
 
 class EntitySync(GeneralEntity):
+    """
+    PSEUDO-CODE
+
+    - List of mongo entities
+    - List of WissKI bundle entities
+    - Compare function
+    - Check function/ Staged function
+    - Update function
+
+    """
+
 
     def __init__(self, mongo_auth_string: str, sync_field: str = "all"):
 
@@ -49,7 +60,6 @@ class EntitySync(GeneralEntity):
         }
 
     # MongoDB
-    @property
     def mongo_list(self):
         if self._sync_field_name in self._single_fields:
             return self._mongo_client['dev'][self._bundle_name].distinct('name')
@@ -59,7 +69,6 @@ class EntitySync(GeneralEntity):
             return names_list
 
     # WissKI Data
-    @property
     def wisski_entities(self):
         return list(entity_uri(search_value="",
                                query_string=self._query.get(self._bundle_dict.get(self._bundle_name)['query']),
