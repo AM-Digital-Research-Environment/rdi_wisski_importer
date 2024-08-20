@@ -37,7 +37,7 @@ class DocumentEntity(GeneralEntity):
                 entity_uri(self._document.get('typeOfResource'), self._query.get('typeofresource'))],
 
             # Field for Identifiers (Mandatory Field)
-            self._bundle.get('g_research_data_item_identifier'): self.identifier_entities,
+            self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
 
             # Project (Mandatory Field)
             self._field.get('f_research_data_item_project'): [
@@ -56,15 +56,13 @@ class DocumentEntity(GeneralEntity):
                 api=self._api, fields=collection_fields,
                 bundle_id=self._bundle.get('g_res_item_collection'))
             # Initialising collection field
-            self._research_data_item["g_res_item_collection"] = [collection_entity]
+            self._research_data_item[self._bundle.get("g_res_item_collection")] = [collection_entity]
         else:
             pass
 
     # Entity list of identifiers
 
-    @property
     def identifier_entities(self):
-
         # Initialising DRE Identifier
         dreId_fields = {
             self._field['f_research_data_item_id_name']: [self._document.get('dre_id')],
@@ -87,7 +85,8 @@ class DocumentEntity(GeneralEntity):
                                        fields=identifier_fields,
                                        bundle_id=self._bundle['g_research_data_item_identifier'])
             entity_list.append(identifier_entity)
-        return entity_list
+
+            return entity_list
 
     # Language
     def language(self):
@@ -267,15 +266,18 @@ class DocumentEntity(GeneralEntity):
         for title in self._document.get('titleInfo'):
             if title.get('title_type') == 'main':
                 self._research_data_item[self._field.get('f_research_data_item_title_main')] = [title.get('title')]
+            else:
+                title_entity_list.append(
+                    Entity(api=self._api,
+                           fields={
+                               self._field.get('f_research_data_item_title_appel'): [title.get('title')],
+                               self._field.get('f_research_data_item_title_type'): [title.get('title_type')]
+                           }, bundle_id=self._bundle.get('g_research_data_item_title'))
+                )
+        if title_entity_list:
+            self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
         else:
-            title_entity_list.append(
-                Entity(api=self._api,
-                       fields={
-                           self._field.get('f_research_data_item_title_appel'): [title.get('title')],
-                           self._field.get('f_research_data_item_title_type'): [title.get('title_type')]
-                       }, bundle_id=self._bundle.get('g_research_data_item_title'))
-            )
-        self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
+            pass
 
     # Dates
     def dateinfo(self):
@@ -351,8 +353,8 @@ class DocumentEntity(GeneralEntity):
 
     def genre(self):
         genre_dict = {
-            'marc': 'Machine-Readable Cataloging',
-            'loc': 'LC Genre',
+            'marc': 'MARC Genre Term List',
+            'loc': 'Library of Congress Genre',
             'aat': 'Art & architecture thesaurus online',
             'tgm2': 'Thesaurus For Graphic Materials',
             'none': 'No Authority/Uncatalogued Genre'
@@ -403,19 +405,19 @@ class DocumentEntity(GeneralEntity):
                 else:
                     subject_fields = {}
                     if not pd.isna(sub.get('uri')):
-                        subject_fields[self._field.get('f_subject_url')] = sub.get('uri')
+                        subject_fields[self._field.get('f_subject_url')] = [sub.get('uri')]
                     else:
                         pass
                     if not pd.isna(sub.get('authority')):
                         # Authority must be in system already
-                        authority_uri = entity_uri(sub.get('authority'), query_string=self._query.get('authority'))
-                        subject_fields[self._field.get('f_subject_authority')] = authority_uri
+                        authority_uri = entity_uri(sub.get('authority'), query_string=self._query.get('authorityURL'))
+                        subject_fields[self._field.get('f_subject_authority')] = [authority_uri]
                     else:
                         pass
                     if not pd.isna(sub.get('authLabel')):
-                        subject_fields[self._field.get('f_subject_tag')] = sub.get('authLabel')
+                        subject_fields[self._field.get('f_subject_tag')] = [sub.get('authLabel')]
                     else:
-                        subject_fields[self._field.get('f_subject_tag')] = sub.get('origLabel')
+                        subject_fields[self._field.get('f_subject_tag')] = [sub.get('origLabel')]
 
                     subject_list.append(
                         Entity(api=self._api, fields=subject_fields,
@@ -440,6 +442,8 @@ class DocumentEntity(GeneralEntity):
     # Staged Values
 
     def staging(self):
+        self.collection()
+        self.identifier_entities()
         self.language()
         self.citation()
         self.url_link()
