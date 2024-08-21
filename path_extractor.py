@@ -6,6 +6,7 @@ import json
 import glob
 import os
 import time
+import xml.etree.ElementTree as eT
 
 
 def pathbuilder_save(xml_file_name=max(glob.glob("pathbuilder/*"), key=os.path.getctime)):

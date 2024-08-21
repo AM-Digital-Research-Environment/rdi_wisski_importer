@@ -453,7 +453,7 @@ class DocumentEntity(GeneralEntity):
         self.language()
         self.citation()
         self.originlocation()
-        #self.currentlocation()
+        self.currentlocation()
         self.url_link()
         self.copyright()
         self.target_audience()
