@@ -86,7 +86,7 @@ class DocumentEntity(GeneralEntity):
                                        bundle_id=self._bundle['g_research_data_item_identifier'])
             entity_list.append(identifier_entity)
 
-            return entity_list
+        return entity_list
 
     # Language
     def language(self):
