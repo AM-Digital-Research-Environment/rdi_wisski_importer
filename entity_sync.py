@@ -127,3 +127,19 @@ class EntitySync(GeneralEntity):
     def update(self):
         for entity_obj in self.staged()['entities']:
             self._api.save(entity_obj)
+
+    # TODO: Person entity affiliation the synchronise
+    """
+    In the scenario where a pre-existing person entity
+    has new affiliation to be updated. This function must
+    check and update entities with new values. (This must be
+    done once institution list is up-to-date)
+    """
+
+    def affiliations_update(self):
+        pass
+
+    # TODO: Related Items
+    """
+    Update reaserch data items with related items link.
+    """
