@@ -6,14 +6,14 @@ Created on Tue May 28 15:17:50 2024
 """
 
 # Library Imports
-import pandas as pd
-import numpy as np
-from typing import Callable
-from pymongo import MongoClient
-from SPARQLWrapper import SPARQLWrapper, JSON, CSV
+import functools
 import io
 import json
+from typing import Callable, NamedTuple, Union
 
+import pandas as pd
+from pymongo import MongoClient
+from SPARQLWrapper import CSV, JSON, SPARQLWrapper
 
 # Function for fetching all documents belong to a DB and Collection
 
@@ -31,11 +31,13 @@ def mongodata_fetch(db_name, collection_name):
 # Repo used: "http://132.180.10.160:7200/repositories/amo_data" (WissKI_89)
 
 
-def entity_uri(search_value: str | dict[str, str],
+@functools.cache
+def entity_uri(search_value: Union[str, NamedTuple],
                query_string: str,
                return_format='json',
                value_input=True,
                conditional=False) -> str | object | None:
+    # IDEA: fetch all entity URIs and cache them
     format_dict = {'json': JSON, 'csv': CSV}
     sparql = SPARQLWrapper("http://132.180.10.89:7200/repositories/wisski_2024-08-13")
     sparql.setReturnFormat(format_dict[return_format])
@@ -45,7 +47,8 @@ def entity_uri(search_value: str | dict[str, str],
         if not conditional:
             sparql.setQuery(query_string.format(search_value=search_value))
         elif conditional:
-            sparql.setQuery(query_string.format(**search_value))
+            assert isinstance(search_value, tuple)
+            sparql.setQuery(query_string.format(**search_value._asdict()))
     elif not value_input:
         sparql.setQuery(query_string)
     query_response = sparql.queryAndConvert()
@@ -60,20 +63,18 @@ def entity_uri(search_value: str | dict[str, str],
         except IndexError:
             return None
 
-# Function for the json data retrieval
-
-
 def json_file(file_path: str):
+    """
+    Retrieve json files from disk.
+    """
     with open(file_path) as file_obj:
-        try:
-            return json.load(file_obj)
-        finally:
-            file_obj.close()
-
-# Function for the entity generation of single
+        return json.load(file_obj)
 
 
 def entity_list_generate(value_list, query_name, exception_function: Callable = None, with_exception=False):
+    """
+    Generate a list of wisski entities for given values.
+    """
     entity_list = []
     for entity_value in value_list:
         uri_value = entity_uri(entity_value, query_name)
