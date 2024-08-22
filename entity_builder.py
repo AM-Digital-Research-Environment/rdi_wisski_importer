@@ -1,33 +1,58 @@
-# Data Wrangling
-import pandas as pd
-
-# Data Parsing
 from datetime import datetime
+from typing import NamedTuple
 from urllib.parse import urlparse
 
-# WissKi Api
-from wisski.api import Api, Pathbuilder, Entity
+import pandas as pd
+from wisski.api import Api, Entity
 
-# Local Functions
-from functions import *
 from auth import GeneralEntity
-from exception_functions import fieldfunction
+from exception_functions import FieldFunctions
+from functions import entity_list_generate, entity_uri, try_func
 
 
-# Class for creating the Research Data Item entity
+class RegionFormatHolder(NamedTuple):
+    """
+    Used to format the SPARQL queries for regions.
+
+    This is a named tuple, so that we can maintain the labels in the format
+    string, and have a hashable object that `functools.cache` can use as cache
+    keys.
+    """
+    level_0: str
+    level_1: str
+
+class GenreFormatHolder(NamedTuple):
+    """
+    Used to format the SPARQL queries for genres.
+
+    This is a named tuple, so that we can maintain the labels in the format
+    string, and have a hashable object that `functools.cache` can use as cache
+    keys.
+    """
+    term: str
+    authority: str
+
 
 class DocumentEntity(GeneralEntity):
+    """
+    Class for creating the Research Data Item entity
+    """
 
-    def __init__(self, bson_doc):
+    def __init__(self, bson_doc, api: Api):
 
         # Super class
         super().__init__()
+
+        # API-client
+        self._api = api
 
         # BSON Metadata Document
         self._document = bson_doc
 
         # GeoLoc Information
         self._origin = self._document.get('location').get('origin')
+
+        self._field_functions = FieldFunctions(self._api)
 
         # Core dictionary for Research Data Items
         self._research_data_item = {
@@ -95,7 +120,7 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
                 document_languages,
                 self._query.get('language'),
-                exception_function=fieldfunction('language').exception,
+                exception_function=self._field_functions.exception('language'),
                 with_exception=True
             )
         else:
@@ -126,8 +151,7 @@ class DocumentEntity(GeneralEntity):
 #   def region(self):
             if not pd.isna(loc_obj.get('l2')) and loc_obj.get('l2') != "":
                 region_uri = entity_uri(
-                    search_value={'level_0': loc_obj.get('l2'),
-                                  'level_1': self._origin.get('l1')},
+                    search_value=RegionFormatHolder(level_0=loc_obj.get('l2'), level_1=self._origin.get('l1')),
                     query_string=self._query.get('region'),
                     conditional=True)
                 self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
@@ -139,10 +163,7 @@ class DocumentEntity(GeneralEntity):
 #    def subregion(self):
         if not pd.isna(loc_obj.get('l3')) and loc_obj.get('l3') != "":
             subregion = entity_uri(
-                search_value={
-                    'level_0': loc_obj.get('l3'),
-                    'level_1': loc_obj.get('l2')
-                },
+                search_value=RegionFormatHolder(level_0=loc_obj.get('l3'), level_1=loc_obj.get('l2')),
                 query_string=self._query.get('subregion'),
                 conditional=True
             )
@@ -150,7 +171,7 @@ class DocumentEntity(GeneralEntity):
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
             elif subregion is None:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                    fieldfunction('subregion').exception(entity_value=loc_obj.get('l3'),
+                    self._field_functions.exception('subregion')(entity_value=loc_obj.get('l3'),
                                                          qualifier_value=region_uri,
                                                          with_qualifier=True)
                 ]
@@ -165,7 +186,7 @@ class DocumentEntity(GeneralEntity):
             ] = entity_list_generate(
                 value_list=self._document.get('location').get('current'),
                 query_name=self._query.get('place'),
-                exception_function=fieldfunction('place').exception,
+                exception_function=self._field_functions.exception('place'),
                 with_exception=True
             )
         else:
@@ -195,7 +216,7 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_research_data_target_audience')] = entity_list_generate(
                 value_list=self._document.get('targetAudience'),
                 query_name=self._query.get('audience'),
-                exception_function=fieldfunction('audience').exception,
+                exception_function=self._field_functions.exception('audience'),
                 with_exception=True
             )
         else:
@@ -234,7 +255,7 @@ class DocumentEntity(GeneralEntity):
         for funder in self._document.get('sponsor'):
             sponsor_value = entity_uri(search_value=funder, query_string=self._query.get('sponsor'))
             if sponsor_value is None:
-                sponsor_value = fieldfunction('sponsor').exception(funder)
+                sponsor_value = self._field_functions.exception('sponsor')(funder)
             else:
                 pass
             name_entity_list.append(
@@ -371,11 +392,12 @@ class DocumentEntity(GeneralEntity):
             authority_uri = entity_uri(search_value=genre_dict.get(authority),
                                        query_string=self._query.get('identifier'))
             for term in genre_terms.get(authority):
-                term_uri = entity_uri(search_value={'term': term, 'authority': authority_uri.split('data/')[1]},
+                term_uri = entity_uri(
+                    search_value=GenreFormatHolder(term=term,authority=authority_uri.split('data/')[1]),
                                       query_string=self._query.get('genre'),
                                       conditional=True)
                 if term_uri is None:
-                    genre_entities.append(fieldfunction('genre').exception(
+                    genre_entities.append(self._field_functions.exception('genre')(
                         entity_value=term,
                         qualifier_value=authority_uri,
                         with_qualifier=True
@@ -439,7 +461,7 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
                 value_list=self._document.get('tags'),
                 query_name=self._query.get('tags'),
-                exception_function=fieldfunction('tags').exception,
+                exception_function=self._field_functions.exception('tags'),
                 with_exception=True
             )
         else:
