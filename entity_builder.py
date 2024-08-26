@@ -38,7 +38,7 @@ class DocumentEntity(GeneralEntity):
     Class for creating the Research Data Item entity
     """
 
-    def __init__(self, bson_doc, api: Api):
+    def __init__(self, bson_doc, api: Api, return_value: bool = False):
 
         # Super class
         super().__init__()
@@ -48,6 +48,9 @@ class DocumentEntity(GeneralEntity):
 
         # BSON Metadata Document
         self._document = bson_doc
+
+        # Function to return Entity values (Bool)
+        self._return_value = return_value
 
         # GeoLoc Information
         self._origin = self._document.get('location').get('origin')
@@ -364,11 +367,16 @@ class DocumentEntity(GeneralEntity):
         else:
             pass
 
-        self._research_data_item[self._bundle.get('g_reseach_data_item_res_type')] = [Entity(
+        pd_entity = [Entity(
             api=self._api,
             fields=resource_type_dict,
             bundle_id=self._bundle.get('g_reseach_data_item_res_type')
         )]
+
+        if self._return_value:
+            return pd_entity
+        else:
+            self._research_data_item[self._bundle.get('g_reseach_data_item_res_type')] = pd_entity
 
         # Technical Property
         if not len(pd_dict.get('tech')) == 0:
