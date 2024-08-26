@@ -18,11 +18,14 @@ from SPARQLWrapper import CSV, JSON, SPARQLWrapper
 # Function for fetching all documents belong to a DB and Collection
 
 
-def mongodata_fetch(db_name, collection_name):
+def mongodata_fetch(db_name, collection_name, as_list: bool = True):
     client = MongoClient("***REMOVED***")
     db = client[db_name]
     collection = db[collection_name]
-    return list(collection.find())
+    if as_list:
+        return list(collection.find())
+    else:
+        return collection
 
 
 # Function for the entity retrieval
