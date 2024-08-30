@@ -1,16 +1,45 @@
 # Research Data Item Importer
 Repo for data insertion into WissKI Main Instance (VM 89)
 
-The following will illustration the steps required to upload the metadata documents strong on DRE MongoDB temp. database to the WissKI instnace on the VM 89.
+**UNDER MAINTENANCE**
 
-### Preliminary steps:
+## API configuration
 
-- Synchronise person and institution entities between MongoDB and WissKI. To ensure the values are up-to-date folow the steps given below.  
-You can use the 'EntitySync' class in the entity_builder package to update the said values.
+### Inject an API instance into `DocumentEntity`
 
-~~~
-# Import EntitySync
-from entity_builder import EntitySync
+To avoid internal setup routines from running over and over again, we expect a pre-configured instance of `wisski_py.Api` to be injected into the `DocumentEntity`:
 
-# Instantiate En
-~~~
+``` python
+api = Api(
+    "https://www.wisski.uni-bayreuth.de/wisski/api/v0",
+    auth=("***REMOVED***", "***REMOVED***"),
+    headers={"Cache-Control": "no-cache"}
+)
+api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
+
+data = fetch_the_data()
+for row in data:
+    staged = DocumentEntity(row, api).staging()
+```
+
+Also see [the example](example.py).
+
+
+### Pathbuilders
+
+Check [the example](example.py) for how to set up the wisski_py API wrapper, and fetch data to be inserted. 
+
+Note that the wisski_py wrapper needs to either be told to use **all** available pathbuilders by calling `api.init_pathbuilders()`, or configured explicitly with the pathbuilders to use:
+
+``python
+# Check which pathbuilders are present in the system.
+print(api.get_pathbuilder_ids()) 
+# >>> ['pathbuilder1', 'pathbuilder2', 'linkblock_pathbuilder']
+
+# Initialize all available pathbuilders:
+api.init_pathbuilders()
+
+# Or configure the pathbuilder explicitly; this internalizes the pathbuilder under
+# the hood, no further processing is required:
+api.pathbuilders = ['pathbuilder1']
+```

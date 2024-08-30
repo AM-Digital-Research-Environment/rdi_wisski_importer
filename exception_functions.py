@@ -9,12 +9,16 @@ from wisski.api import Api, Pathbuilder, Entity
 # Exception functions to be written for fields containing controlled vocabs
 
 
-class fieldfunction(GeneralEntity):
+class FieldFunctions(GeneralEntity):
 
-    def __init__(self, field_name):
+    def __init__(self, api: Api):
 
         # Super Class
-        super().__init__()
+        self._bundle = json_file("dicts/bundles.json")
+        self._field = json_file("dicts/fields.json")
+        self._query = json_file("dicts/sparql_queries.json")
+        self._language = json_file("dicts/lang.json")
+        self._api = api
 
         # Field Dictionary
         self._path_dict = {
@@ -31,10 +35,6 @@ class fieldfunction(GeneralEntity):
                 'bundle': self._bundle.get('b_authority_tag'),
                 'field': self._field.get('f_auth_tag_tag'),
                 'qualifier': self._field.get('f_auth_tag_source')
-            },
-            'subject': {
-                'bundle': self._bundle.get('g_subject'),
-                'field': self._field.get('f_subject_tag')
             },
             'tags': {
                 'bundle': self._bundle.get('g_tag'),
@@ -54,19 +54,20 @@ class fieldfunction(GeneralEntity):
             }
         }
 
-        # Field/Bundle
-        self._field_info = self._path_dict.get(field_name)
-
     # Generalised Exception Function
-    def exception(self, entity_value, qualifier_value=None, with_qualifier=False):
-        if entity_value is not None:
-            fields_data = {self._field_info.get('field'): [entity_value]}
-            if with_qualifier:
-                fields_data[self._field_info.get('qualifier')] = [qualifier_value]
+    def exception(self, field_name: str):
+        def inner(entity_value, qualifier_value=None, with_qualifier=False):
+            if entity_value is not None:
+                fields_data = {self._path_dict.get(field_name).get('field'): [entity_value]}
+                if with_qualifier:
+                    fields_data[self._path_dict.get(field_name).get('qualifier')] = [qualifier_value]
+                else:
+                    pass
+
+                return Entity(api=self._api,
+                            fields=fields_data,
+                            bundle_id=self._path_dict.get(field_name).get('bundle'))
             else:
                 pass
-            return Entity(api=self._api,
-                          fields=fields_data,
-                          bundle_id=self._field_info.get('bundle'))
-        else:
-            pass
+
+        return inner

@@ -1,15 +1,27 @@
 # XML & pandas Library
-import xml.etree.ElementTree as eT
+from urllib.parse import urlparse
+from datetime import datetime
+import wget
 import json
+import glob
+import os
+import time
+import xml.etree.ElementTree as eT
 
 
-def pathbuilder_save(xml_file_name):
-    tree = eT.parse(xml_file_name)
+def pathbuilder_save(xml_file_name=max(glob.glob("pathbuilder/*"), key=os.path.getctime)):
+
+    if os.path.isfile(xml_file_name):
+        tree = eT.parse(xml_file_name)
+    elif urlparse(xml_file_name).netloc:
+        wget.download(xml_file_name, out=f"pathbuilder/pb_{datetime.now().strftime('%Y%m%d%H%M%S')}.xml")
+        time.sleep(20)
+        latest = max(glob.glob("pathbuilder/*"), key=os.path.getctime)
+        tree = eT.parse(latest)
+
     root = tree.getroot()
-
     bundles = {}
     fields = {}
-
     for path in root.findall('path'):
         if path.find('is_group').text == '1':
             bundles[path.find('id').text] = path.find('bundle').text
