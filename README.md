@@ -31,7 +31,7 @@ Check [the example](example.py) for how to set up the wisski_py API wrapper, and
 
 Note that the wisski_py wrapper needs to either be told to use **all** available pathbuilders by calling `api.init_pathbuilders()`, or configured explicitly with the pathbuilders to use:
 
-``python
+````python
 # Check which pathbuilders are present in the system.
 print(api.get_pathbuilder_ids()) 
 # >>> ['pathbuilder1', 'pathbuilder2', 'linkblock_pathbuilder']
