@@ -29,7 +29,7 @@ for row in data:
 Also see [the example](example.py).
 
 
-### Pathbuilders
+## Pathbuilders
 
 Check [the example](example.py) for how to set up the wisski_py API wrapper, and fetch data to be inserted. 
 
