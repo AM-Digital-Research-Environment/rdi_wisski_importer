@@ -40,9 +40,9 @@ print(api.get_pathbuilder_ids())
 
 >>> ['pathbuilder1', 'pathbuilder2', 'linkblock_pathbuilder']
 
-#### Initialize all available pathbuilders:
+### Initialize all available pathbuilders:
 api.init_pathbuilders()
 
-#### Or configure the pathbuilder explicitly; this internalizes the pathbuilder underthe hood, no further processing is required:
+### Or configure the pathbuilder explicitly; this internalizes the pathbuilder underthe hood, no further processing is required:
 api.pathbuilders = ['pathbuilder1']
 ```
