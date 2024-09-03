@@ -29,20 +29,21 @@ for row in data:
 Also see [the example](example.py).
 
 
-## Pathbuilders
+### Pathbuilders
 
 Check [the example](example.py) for how to set up the wisski_py API wrapper, and fetch data to be inserted. 
 
 Note that the wisski_py wrapper needs to either be told to use **all** available pathbuilders by calling `api.init_pathbuilders()`, or configured explicitly with the pathbuilders to use:
 
-### Check which pathbuilders are present in the system.
+```python
+# Check which pathbuilders are present in the system.
 print(api.get_pathbuilder_ids()) 
+# >>> ['pathbuilder1', 'pathbuilder2', 'linkblock_pathbuilder']
 
->>> ['pathbuilder1', 'pathbuilder2', 'linkblock_pathbuilder']
-
-### Initialize all available pathbuilders:
+# Initialize all available pathbuilders:
 api.init_pathbuilders()
 
-### Or configure the pathbuilder explicitly; this internalizes the pathbuilder underthe hood, no further processing is required:
+# Or configure the pathbuilder explicitly; this internalizes the pathbuilder under
+# the hood, no further processing is required:
 api.pathbuilders = ['pathbuilder1']
 ```
