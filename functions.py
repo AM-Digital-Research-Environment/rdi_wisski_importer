@@ -18,8 +18,9 @@ from SPARQLWrapper import CSV, JSON, SPARQLWrapper
 # Function for fetching all documents belong to a DB and Collection
 
 
+# Fill in the MongoDBClient bot URI below
 def mongodata_fetch(db_name, collection_name, as_list: bool = True):
-    client = MongoClient("***REMOVED***")
+    client = MongoClient("")
     db = client[db_name]
     collection = db[collection_name]
     if as_list:
