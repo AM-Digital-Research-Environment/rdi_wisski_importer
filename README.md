@@ -1,6 +1,10 @@
 # Research Data Item Importer
 Repo for data insertion into WissKI Main Instance (VM 89)
 
+### Authentication for the MongoDB Client
+For authentication information (MongoDB Client bot URI) in the functions.py, please fill in or enquire us.
+
+
 **UNDER MAINTENANCE**
 
 ## API configuration
@@ -12,7 +16,7 @@ To avoid internal setup routines from running over and over again, we expect a p
 ``` python
 api = Api(
     "https://www.wisski.uni-bayreuth.de/wisski/api/v0",
-    auth=("***REMOVED***", "***REMOVED***"),
+    auth=("some_username", "super_secure_password"),
     headers={"Cache-Control": "no-cache"}
 )
 api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
@@ -31,15 +35,14 @@ Check [the example](example.py) for how to set up the wisski_py API wrapper, and
 
 Note that the wisski_py wrapper needs to either be told to use **all** available pathbuilders by calling `api.init_pathbuilders()`, or configured explicitly with the pathbuilders to use:
 
-``python
-# Check which pathbuilders are present in the system.
+### Check which pathbuilders are present in the system.
 print(api.get_pathbuilder_ids()) 
-# >>> ['pathbuilder1', 'pathbuilder2', 'linkblock_pathbuilder']
 
-# Initialize all available pathbuilders:
+>>> ['pathbuilder1', 'pathbuilder2', 'linkblock_pathbuilder']
+
+#### Initialize all available pathbuilders:
 api.init_pathbuilders()
 
-# Or configure the pathbuilder explicitly; this internalizes the pathbuilder under
-# the hood, no further processing is required:
+#### Or configure the pathbuilder explicitly; this internalizes the pathbuilder underthe hood, no further processing is required:
 api.pathbuilders = ['pathbuilder1']
 ```
