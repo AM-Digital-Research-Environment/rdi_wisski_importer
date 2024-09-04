@@ -10,6 +10,7 @@ import functools
 import io
 import json
 from typing import Callable, NamedTuple, Union
+from pathlib import Path
 
 import pandas as pd
 from pymongo import MongoClient
@@ -18,8 +19,20 @@ from SPARQLWrapper import CSV, JSON, SPARQLWrapper
 # Function for fetching all documents belong to a DB and Collection
 
 
+def load_config(config_file='functions_config.json'):
+    config_path = Path(config_file)
+    try:
+        with config_path.open() as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON in config file: {config_path}")
+
+
 def mongodata_fetch(db_name, collection_name, as_list: bool = True):
-    client = MongoClient("mongodb://bot:WissKI%401231@132.180.10.89:27017/?authMechanism=DEFAULT")
+    config = load_config()
+    client = MongoClient(config['mongo_admin_uri'])
     db = client[db_name]
     collection = db[collection_name]
     if as_list:
@@ -31,7 +44,6 @@ def mongodata_fetch(db_name, collection_name, as_list: bool = True):
 # Function for the entity retrieval
 # This function checks for the existence of entity and return the WissKI for the same,
 # Incase entity does not exist, the function return the np.nan
-# Repo used: "http://132.180.10.160:7200/repositories/amo_data" (WissKI_89)
 
 
 @functools.cache
@@ -41,11 +53,13 @@ def entity_uri(search_value: Union[str, NamedTuple],
                value_input=True,
                conditional=False) -> str | object | None:
     # IDEA: fetch all entity URIs and cache them
+    # Load graphdb sparql configuration
+    config = load_config()
     format_dict = {'json': JSON, 'csv': CSV}
-    sparql = SPARQLWrapper("http://132.180.10.89:7200/repositories/wisski_2024-08-13")
+    sparql = SPARQLWrapper(config['sparql_endpoint'])
     sparql.setReturnFormat(format_dict[return_format])
     sparql.setHTTPAuth('BASIC')
-    sparql.setCredentials("datacurator", "WissKIAI4#")
+    sparql.setCredentials(config['sparql_username'], config['sparql_password'])
     if value_input:
         if not conditional:
             sparql.setQuery(query_string.format(search_value=search_value))
