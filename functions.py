@@ -48,7 +48,7 @@ def entity_uri(search_value: Union[str, NamedTuple],
     # Load configuration
     config = load_config()
     format_dict = {'json': JSON, 'csv': CSV}
-    sparql = SPARQLWrapper("***REMOVED******REMOVED***")
+    sparql = SPARQLWrapper(config['sparql_endpoint'])
     sparql.setReturnFormat(format_dict[return_format])
     sparql.setHTTPAuth('BASIC')
     sparql.setCredentials(config['sparql_username'], config['sparql_password'])
