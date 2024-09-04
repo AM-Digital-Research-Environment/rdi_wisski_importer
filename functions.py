@@ -32,8 +32,10 @@ def mongodata_fetch(db_name, collection_name, as_list: bool = True):
 # Function for the entity retrieval
 # This function checks for the existence of entity and return the WissKI for the same,
 # Incase entity does not exist, the function return the np.nan
-# Repo used: "***REMOVED******REMOVED***" (WissKI_89)
 
+def load_config():
+    with open('functions_config.json') as config_file:
+        return json.load(config_file)
 
 @functools.cache
 def entity_uri(search_value: Union[str, NamedTuple],
@@ -42,11 +44,13 @@ def entity_uri(search_value: Union[str, NamedTuple],
                value_input=True,
                conditional=False) -> str | object | None:
     # IDEA: fetch all entity URIs and cache them
+    # Load configuration
+    config = load_config()
     format_dict = {'json': JSON, 'csv': CSV}
-    sparql = SPARQLWrapper("***REMOVED******REMOVED***")
+    sparql = SPARQLWrapper(config['sparql_endpoint'])
     sparql.setReturnFormat(format_dict[return_format])
     sparql.setHTTPAuth('BASIC')
-    sparql.setCredentials("***REMOVED***", "***REMOVED***")
+    sparql.setCredentials(config['sparql_username'], config['sparql_password'])
     if value_input:
         if not conditional:
             sparql.setQuery(query_string.format(search_value=search_value))

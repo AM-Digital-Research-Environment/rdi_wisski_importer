@@ -1,8 +1,8 @@
 # Research Data Item Importer
 Repo for data insertion into WissKI Main Instance (VM 89)
 
-### Authentication for the MongoDB Client
-For authentication information (MongoDB Client bot URI) in the functions.py, please fill in or enquire us.
+### Authentication for the MongoDB Client and the GraphDB connection
+For authentication information (MongoDB Client bot URI and functions_config.json) in the functions.py, please fill in or enquire us.
 
 
 **UNDER MAINTENANCE**
