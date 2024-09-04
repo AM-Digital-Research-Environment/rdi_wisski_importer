@@ -21,10 +21,14 @@ class GeneralEntity:
         self._query = json_file("dicts/sparql_queries.json")
         self._language = json_file("dicts/lang.json")
 
+        # Load configuration
+        with open('auth_config.json', 'r') as config_file:
+            self._config = json.load(config_file)
+
         # WissKI Auth
         if api is None:
                 self._api_url = "***REMOVED***/wisski/api/v0"
-                self._auth = ("***REMOVED***", "***REMOVED***")
+                self._auth = (self._config['username'], self._config['password'])
                 self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
                 self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
         else:

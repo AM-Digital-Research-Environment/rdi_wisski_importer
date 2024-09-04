@@ -17,7 +17,11 @@ import json
 # Function for the entity retrieval
 # This function checks for the existence of entity and return the WissKI for the same,
 # Incase entity does not exist, the function return the np.nan
-# Repo used: "***REMOVED******REMOVED***" (WissKI_89)
+
+
+def load_config():
+    with open('functions_config.json') as config_file:
+        return json.load(config_file)
 
 
 def entity_uri(search_value: str | dict[str, str],
@@ -25,10 +29,12 @@ def entity_uri(search_value: str | dict[str, str],
                return_format='json',
                value_input=True,
                conditional=False) -> str | object | None:
+    # Load graphdb sparql configuration
+    config = load_config()
     format_dict = {'json': JSON, 'csv': CSV}
-    sparql = SPARQLWrapper("***REMOVED***")
+    sparql = SPARQLWrapper(config['sparql_endpoint'])
     sparql.setHTTPAuth('BASIC')
-    sparql.setCredentials('***REMOVED***', '***REMOVED***')
+    sparql.setCredentials(config['sparql_username'], config['sparql_password'])
     sparql.setReturnFormat(format_dict[return_format])
     if value_input:
         if not conditional:
