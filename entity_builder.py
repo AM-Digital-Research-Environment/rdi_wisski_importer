@@ -222,38 +222,54 @@ class DocumentEntity(GeneralEntity):
     # URL
     def url_link(self):
         if not self._document.get('url'):
-            self._research_data_item[self._field.get('f_research_data_item_url')] = self._document.get('url')
+            if self._return_value:
+                return self._document.get('url')
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_url')] = self._document.get('url')
 
     # Copyright
     def copyright(self):
         if not self._document.get('accessCondition')['rights']:
-            self._research_data_item[self._field.get('f_research_data_item_copyright')] = entity_list_generate(
+             _copyright_values = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
                 self._query.get('license'),
-
             )
+        if self._return_value:
+            return _copyright_values
+        else:
+            self._research_data_item[self._field.get('f_research_data_item_copyright')] = _copyright_values
 
     # Target Audience
     def target_audience(self):
         if not self._document.get('targetAudience'):
-            self._research_data_item[self._field.get('f_research_data_target_audience')] = entity_list_generate(
+            _target_audience_values = entity_list_generate(
                 value_list=self._document.get('targetAudience'),
                 query_name=self._query.get('audience'),
                 exception_function=self._field_functions.exception('audience'),
                 with_exception=True
             )
+            if self._return_value:
+                return _target_audience_values
+            else:
+                self._research_data_item[self._field.get('f_research_data_target_audience')] = _target_audience_values
 
     # Abstract
     def abstract(self):
         if not self._document.get('abstract') and pd.isna(self._document.get('abstract')) is False:
-            self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
+            if self._return_value:
+                return [self._document.get('abstract')]
+            else:
+                self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
 
     # Table of Content
     def tabel_of_content(self):
         if not self._document.get('tableOfContents') and pd.isna(self._document.get('tableOfContents')) is False:
-            self._research_data_item[self._field.get('f_research_data_item_toc')] = [
-                self._document.get('tableOfContents')
-            ]
+            if self._return_value:
+                return [self._document.get('tableOfContents')]
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_toc')] = [
+                    self._document.get('tableOfContents')
+                ]
 
     # Note(s)
     def note(self):
@@ -318,7 +334,10 @@ class DocumentEntity(GeneralEntity):
                            }, bundle_id=self._bundle.get('g_research_data_item_title'))
                 )
         if title_entity_list:
-            self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
+            if self._return_value:
+                return title_entity_list
+            else:
+                self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
 
     # Dates
     def dateinfo(self):
@@ -416,7 +435,10 @@ class DocumentEntity(GeneralEntity):
                 elif urlparse(term_uri).scheme != '':
                     genre_entities.append(term_uri)
 
-            self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
+            if self._return_value:
+                return genre_entities
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
     # Subject
     def subject(self):
@@ -446,17 +468,24 @@ class DocumentEntity(GeneralEntity):
                         Entity(api=self._api, fields=subject_fields,
                                bundle_id=self._bundle.get('g_subject'))
                     )
-            self._research_data_item[self._field.get('f_research_data_item_subject')] = subject_list
+            if self._return_value:
+                return subject_list
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_subject')] = subject_list
 
     # Tags
     def tags(self):
         if not self._document.get('tags'):
-            self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
+            _tag_values = entity_list_generate(
                 value_list=self._document.get('tags'),
                 query_name=self._query.get('tags'),
                 exception_function=self._field_functions.exception('tags'),
                 with_exception=True
             )
+            if self._return_value:
+                return _tag_values
+            else:
+                self._research_data_item[self._field.get('f_reseach_data_item_tag')] = _tag_values
 
     # Staged Values
 
