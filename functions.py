@@ -10,6 +10,7 @@ import functools
 import io
 import json
 from typing import Callable, NamedTuple, Union
+from pathlib import Path
 
 import pandas as pd
 from pymongo import MongoClient
