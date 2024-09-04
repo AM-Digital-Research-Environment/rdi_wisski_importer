@@ -5,7 +5,7 @@ from wisski.api import Api
 import functions
 from entity_builder import DocumentEntity
 
-# Fill in the username and password below
+# Fill in the WissKI API username and password below
 username = ""
 password = ""
 api = Api("https://www.wisski.uni-bayreuth.de/wisski/api/v0", auth=(username, password), headers={"Cache-Control": "no-cache"})
