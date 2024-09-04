@@ -11,6 +11,7 @@ import numpy as np
 from SPARQLWrapper import SPARQLWrapper, JSON, CSV
 import io
 import json
+from pathlib import Path
 
 
 
@@ -19,9 +20,15 @@ import json
 # Incase entity does not exist, the function return the np.nan
 
 
-def load_config():
-    with open('functions_config.json') as config_file:
-        return json.load(config_file)
+def load_config(config_file='functions_config.json'):
+    config_path = Path(config_file)
+    try:
+        with config_path.open() as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON in config file: {config_path}")
 
 
 def entity_uri(search_value: str | dict[str, str],
