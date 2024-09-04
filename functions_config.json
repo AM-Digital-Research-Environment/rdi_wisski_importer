@@ -1,5 +1,5 @@
 {
     "sparql_endpoint": "graphdb_url",
-    "sparql_username": "your_username",
-    "sparql_password": "your_password"
+    "sparql_username": "your_graphdb_username",
+    "sparql_password": "your_graphdb_password"
   }
