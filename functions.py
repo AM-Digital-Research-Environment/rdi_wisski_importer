@@ -14,13 +14,26 @@ from typing import Callable, NamedTuple, Union
 import pandas as pd
 from pymongo import MongoClient
 from SPARQLWrapper import CSV, JSON, SPARQLWrapper
+from pathlib import Path
 
 # Function for fetching all documents belong to a DB and Collection
 
 
+def load_config(config_file='functions_config.json'):
+    config_path = Path(config_file)
+    try:
+        with config_path.open() as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON in config file: {config_path}")
+    
+
 # Fill in the MongoDBClient bot URI below
 def mongodata_fetch(db_name, collection_name, as_list: bool = True):
-    client = MongoClient("")
+    config = load_config()
+    client = MongoClient(config['mongo_bot_uri'])
     db = client[db_name]
     collection = db[collection_name]
     if as_list:
@@ -33,9 +46,6 @@ def mongodata_fetch(db_name, collection_name, as_list: bool = True):
 # This function checks for the existence of entity and return the WissKI for the same,
 # Incase entity does not exist, the function return the np.nan
 
-def load_config():
-    with open('functions_config.json') as config_file:
-        return json.load(config_file)
 
 @functools.cache
 def entity_uri(search_value: Union[str, NamedTuple],
