@@ -44,7 +44,7 @@ def entity_uri(search_value: Union[str, NamedTuple],
                value_input=True,
                conditional=False) -> str | object | None:
     # IDEA: fetch all entity URIs and cache them
-    # Load configuration
+    # Load graphdb sparql configuration
     config = load_config()
     format_dict = {'json': JSON, 'csv': CSV}
     sparql = SPARQLWrapper(config['sparql_endpoint'])
