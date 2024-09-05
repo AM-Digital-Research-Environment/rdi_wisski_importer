@@ -22,6 +22,7 @@ class RegionFormatHolder(NamedTuple):
     level_0: str
     level_1: str
 
+
 class GenreFormatHolder(NamedTuple):
     """
     Used to format the SPARQL queries for genres.
@@ -75,7 +76,7 @@ class DocumentEntity(GeneralEntity):
     # Collection
 
     def collection(self):
-        if not self._document.get('collection'):
+        if self._document.get('collection'):
             # Collection fields
             collection_fields = {
                 self._field['f_res_item_collection']: entity_list_generate(self._document.get('collection'),
@@ -100,7 +101,7 @@ class DocumentEntity(GeneralEntity):
                                                                      self._query.get('identifier'))]
         }
         _dreidentity_ = Entity(api=self._api, fields=_dreidfields_,
-                              bundle_id=self._bundle['g_research_data_item_identifier'])
+                               bundle_id=self._bundle['g_research_data_item_identifier'])
 
         entity_list = [_dreidentity_]
 
@@ -120,10 +121,10 @@ class DocumentEntity(GeneralEntity):
 
     # Language
     def language(self):
-        if not self._document.get('language'):
+        if self._document.get('language'):
             document_languages = [try_func(l, lambda x: self._language.get(x)) for l in self._document.get('language')]
             lang_list = entity_list_generate(
-                 document_languages,
+                document_languages,
                 self._query.get('language'),
                 exception_function=self._field_functions.exception('language'),
                 with_exception=True
@@ -135,7 +136,7 @@ class DocumentEntity(GeneralEntity):
 
     # Citation
     def citation(self):
-        if not self._document.get('citation'):
+        if self._document.get('citation'):
             citation_value = self._document.get('citation')
             if self._return_value:
                 return citation_value
@@ -165,12 +166,15 @@ class DocumentEntity(GeneralEntity):
             # Region (level 2)
             if not pd.isna(loc_obj.get('l2')) and loc_obj.get('l2') != "":
                 _region_uri = entity_uri(
-                    search_value=RegionFormatHolder(level_0=loc_obj.get('l2'), level_1=self._origin.get('l1')),
+                    search_value=RegionFormatHolder(level_0=loc_obj.get('l2'), level_1=loc_obj.get('l1')),
                     query_string=self._query.get('region'),
                     conditional=True)
                 _region_values.append(_region_uri)
 
             # Subregion
+            """
+            In case of an exception we assume, that the region values is already given.
+            """
             if not pd.isna(loc_obj.get('l3')) and loc_obj.get('l3') != "":
                 _subregion = entity_uri(
                     search_value=RegionFormatHolder(level_0=loc_obj.get('l3'), level_1=loc_obj.get('l2')),
@@ -202,10 +206,9 @@ class DocumentEntity(GeneralEntity):
             if _subregion_values:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = _subregion_values
 
-
     # Current Location
     def currentlocation(self):
-        if not self._document.get('location').get('current'):
+        if self._document.get('location').get('current'):
             _current_location_value = entity_list_generate(
                 value_list=self._document.get('location').get('current'),
                 query_name=self._query.get('place'),
@@ -221,7 +224,7 @@ class DocumentEntity(GeneralEntity):
 
     # URL
     def url_link(self):
-        if not self._document.get('url'):
+        if self._document.get('url'):
             if self._return_value:
                 return self._document.get('url')
             else:
@@ -229,19 +232,19 @@ class DocumentEntity(GeneralEntity):
 
     # Copyright
     def copyright(self):
-        if not self._document.get('accessCondition')['rights']:
-             _copyright_values = entity_list_generate(
+        if self._document.get('accessCondition')['rights']:
+            _copyright_values = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
-                self._query.get('license'),
+                self._query.get('license')
             )
-        if self._return_value:
-            return _copyright_values
-        else:
-            self._research_data_item[self._field.get('f_research_data_item_copyright')] = _copyright_values
+            if self._return_value:
+                return _copyright_values
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_copyright')] = _copyright_values
 
     # Target Audience
     def target_audience(self):
-        if not self._document.get('targetAudience'):
+        if self._document.get('targetAudience'):
             _target_audience_values = entity_list_generate(
                 value_list=self._document.get('targetAudience'),
                 query_name=self._query.get('audience'),
@@ -255,7 +258,7 @@ class DocumentEntity(GeneralEntity):
 
     # Abstract
     def abstract(self):
-        if not self._document.get('abstract') and pd.isna(self._document.get('abstract')) is False:
+        if self._document.get('abstract') and pd.isna(self._document.get('abstract')) is False:
             if self._return_value:
                 return [self._document.get('abstract')]
             else:
@@ -263,7 +266,7 @@ class DocumentEntity(GeneralEntity):
 
     # Table of Content
     def tabel_of_content(self):
-        if not self._document.get('tableOfContents') and pd.isna(self._document.get('tableOfContents')) is False:
+        if self._document.get('tableOfContents') and pd.isna(self._document.get('tableOfContents')) is False:
             if self._return_value:
                 return [self._document.get('tableOfContents')]
             else:
@@ -273,7 +276,7 @@ class DocumentEntity(GeneralEntity):
 
     # Note(s)
     def note(self):
-        if not self._document.get('note') and pd.isna(self._document.get('note')) is False:
+        if self._document.get('note') and pd.isna(self._document.get('note')) is False:
             if self._return_value:
                 return self._document.get('note')
             else:
@@ -365,9 +368,8 @@ class DocumentEntity(GeneralEntity):
                     )
                 except TypeError:
                     pass
-        if additional_dates != []:
+        if additional_dates:
             self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
-
 
     # Technical Description
 
@@ -375,7 +377,7 @@ class DocumentEntity(GeneralEntity):
         pd_dict = self._document.get('physicalDescription')
 
         resource_type_dict = {
-        # Type (Mandatory Field)
+            # Type (Mandatory Field)
             self._field.get('f_reseach_data_item_res_type'): [
                 self._document.get('physicalDescription').get('type')
             ]
@@ -402,9 +404,8 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._bundle.get('g_reseach_data_item_res_type')] = pd_entity
 
         # Technical Property
-        if not pd_dict.get('tech'):
+        if pd_dict.get('tech'):
             self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = pd_dict.get('tech')
-
 
     # Genre
 
@@ -423,9 +424,9 @@ class DocumentEntity(GeneralEntity):
                                        query_string=self._query.get('identifier'))
             for term in genre_terms.get(authority):
                 term_uri = entity_uri(
-                    search_value=GenreFormatHolder(term=term,authority=authority_uri.split('data/')[1]),
-                                      query_string=self._query.get('genre'),
-                                      conditional=True)
+                    search_value=GenreFormatHolder(term=term, authority=authority_uri.split('data/')[1]),
+                    query_string=self._query.get('genre'),
+                    conditional=True)
                 if term_uri is None:
                     genre_entities.append(self._field_functions.exception('genre')(
                         entity_value=term,
@@ -442,14 +443,14 @@ class DocumentEntity(GeneralEntity):
 
     # Subject
     def subject(self):
-        if not self._document.get('subject'):
+        if self._document.get('subject'):
             subject_list = []
             for sub in self._document.get('subject'):
                 by_uri = entity_uri(sub.get('uri'), self._query.get('subjectURI'))
                 by_label = entity_uri(sub.get('origLabel'), self._query.get('subjectLabel'))
-                if not by_uri:
+                if by_uri:
                     subject_list.append(by_uri)
-                elif not by_label:
+                elif by_label:
                     subject_list.append(by_label)
                 else:
                     subject_fields = {}
@@ -475,7 +476,7 @@ class DocumentEntity(GeneralEntity):
 
     # Tags
     def tags(self):
-        if not self._document.get('tags'):
+        if self._document.get('tags'):
             _tag_values = entity_list_generate(
                 value_list=self._document.get('tags'),
                 query_name=self._query.get('tags'),
@@ -486,6 +487,19 @@ class DocumentEntity(GeneralEntity):
                 return _tag_values
             else:
                 self._research_data_item[self._field.get('f_reseach_data_item_tag')] = _tag_values
+
+    # URL
+    def preview_image(self):
+        try:
+            if self._document.get('previewImage'):
+                if self._return_value:
+                    return self._document.get('previewImage')
+                else:
+                    self._research_data_item[
+                        self._field.get('f_research_data_item_prv_img_url')
+                    ] = self._document.get('previewImage')
+        except KeyError:
+            pass
 
     # Staged Values
 
@@ -509,6 +523,7 @@ class DocumentEntity(GeneralEntity):
         self.genre()
         self.subject()
         self.tags()
+        self.preview_image()
         return self._research_data_item
 
     def upload(self):
