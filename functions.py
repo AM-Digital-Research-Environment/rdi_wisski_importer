@@ -12,6 +12,8 @@ from SPARQLWrapper import SPARQLWrapper, JSON, CSV
 import io
 import json
 from pathlib import Path
+import os
+from pymongo import MongoClient
 
 
 
@@ -20,7 +22,7 @@ from pathlib import Path
 # Incase entity does not exist, the function return the np.nan
 
 
-def load_config(config_file='functions_config.json'):
+def load_config(config_file='dicts/functions_config.json'):
     config_path = Path(config_file)
     try:
         with config_path.open() as f:

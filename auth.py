@@ -5,8 +5,8 @@ from typing import Callable
 
 # WissKi Api
 from wisski.api import Api, Pathbuilder, Entity
-
 import json
+import os
 
 # General entity management variable class
 
@@ -21,18 +21,19 @@ class GeneralEntity:
         self._query = json_file("dicts/sparql_queries.json")
         self._language = json_file("dicts/lang.json")
 
-        # Load configuration
-        with open('auth_config.json', 'r') as config_file:
-            self._config = json.load(config_file)
+        # Load the configuration from the dicts folder
+        config_path = os.path.join(os.path.dirname(__file__), 'dicts', 'auth_config.json')
+        with open(config_path, 'r') as config_file:
+            config = json.load(config_file)
 
         # WissKI Auth
         if api is None:
-                self._api_url = "***REMOVED***/wisski/api/v0"
-                self._auth = (self._config['username'], self._config['password'])
-                self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
-                self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
+            self._api_url = "***REMOVED***/wisski/api/v0"
+            self._auth = (config['username'], config['password'])
+            self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
+            self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
         else:
-                self._api = api
+            self._api = api
         
         if known_entities is None:
                 self.wisski_entities = {}
