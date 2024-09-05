@@ -6,7 +6,10 @@ import jmespath as jm
 
 # Local Libraries
 from auth import *
-from functions import entity_uri
+from functions import *
+
+# WissKI
+from wisski.api import Api, Entity
 
 # Class for Associated Entities Synchronisation
 
@@ -23,11 +26,14 @@ class EntitySync(GeneralEntity):
 
     """
 
-    def __init__(self, mongo_auth_string: str, sync_field: str):
+    def __init__(self, api: Api, sync_field: str):
+
+        # API-client
+        self._api = api
 
         # Field name initialisation
         self._sync_field_name = sync_field
-        self._collection = MongoClient(mongo_auth_string)['dev'][self._sync_field_name]
+        self._collection = mongodata_fetch(db_name='dev', collection_name=self._sync_field_name)
         self._single_fields = ['institutions', 'groups']
         self._double_fields = ['persons', 'collections']
 
@@ -62,11 +68,6 @@ class EntitySync(GeneralEntity):
             }
         }
 
-    # MongoDB List
-
-    def mongo_list(self):
-        return list(self._collection.find())
-
     # WissKI Entity List
 
     def wisski_list(self):
@@ -77,7 +78,7 @@ class EntitySync(GeneralEntity):
     def missing_entities(self):
         missing = []
         wisskiList = self.wisski_list()
-        mongo_response = self.mongo_list()
+        mongo_response = self._collection
         mongoList = jm.search("[].name", mongo_response)
         for entity in mongoList:
             if entity not in wisskiList:
