@@ -15,10 +15,11 @@ import pandas as pd
 from pymongo import MongoClient
 from SPARQLWrapper import CSV, JSON, SPARQLWrapper
 from pathlib import Path
+import os
 # Function for fetching all documents belong to a DB and Collection
 
 
-def load_config(config_file='functions_config.json'):
+def load_config(config_file='dicts/functions_config.json'):
     config_path = Path(config_file)
     try:
         with config_path.open() as f:
