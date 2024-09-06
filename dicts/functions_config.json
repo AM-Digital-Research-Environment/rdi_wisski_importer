@@ -2,5 +2,5 @@
     "sparql_endpoint": "your_graphdb_url",
     "sparql_username": "your_graphdb_username",
     "sparql_password": "your_graphdb_password",
-    "mongo_bot_uri": "your_MongoDB_Client_bot_URI"
+    "mongo_uri": "your_MongoDB_Client_bot_URI"
   }
