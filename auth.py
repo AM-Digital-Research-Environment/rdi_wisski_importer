@@ -28,7 +28,7 @@ class GeneralEntity:
 
         # WissKI Auth
         if api is None:
-            self._api_url = "***REMOVED***/wisski/api/v0"
+            self._api_url = "http://132.180.10.89/wisski/api/v0"
             self._auth = (config['username'], config['password'])
             self._api = Api(self._api_url, self._auth, {"Cache-Control": "no-cache"})
             self._api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
