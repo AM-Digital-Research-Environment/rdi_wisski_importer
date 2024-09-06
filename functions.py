@@ -33,7 +33,7 @@ def load_config(config_file='dicts/functions_config.json'):
 # Fill in the MongoDBClient bot URI below
 def mongodata_fetch(db_name, collection_name, as_list: bool = True):
     config = load_config()
-    client = MongoClient(config['mongo_bot_uri'])
+    client = MongoClient(config['mongo_uri'])
     db = client[db_name]
     collection = db[collection_name]
     if as_list:
