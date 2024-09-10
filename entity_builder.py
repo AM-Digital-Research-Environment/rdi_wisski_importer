@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import NamedTuple
 from urllib.parse import urlparse
 
-import numpy as np
 import pandas as pd
 from wisski.api import Api, Entity
 
@@ -21,7 +20,7 @@ class RegionFormatHolder(NamedTuple):
     """
     level_0: str
     level_1: str
-
+      
 
 class GenreFormatHolder(NamedTuple):
     """
@@ -235,7 +234,8 @@ class DocumentEntity(GeneralEntity):
         if self._document.get('accessCondition')['rights']:
             _copyright_values = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
-                self._query.get('license')
+                self._query.get('license'),
+
             )
             if self._return_value:
                 return _copyright_values
