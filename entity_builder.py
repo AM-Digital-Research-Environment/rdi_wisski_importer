@@ -20,6 +20,7 @@ class RegionFormatHolder(NamedTuple):
     """
     level_0: str
     level_1: str
+      
 
 class GenreFormatHolder(NamedTuple):
     """
@@ -74,7 +75,7 @@ class DocumentEntity(GeneralEntity):
     # Collection
 
     def collection(self):
-        if not self._document.get('collection') == []:
+        if self._document.get('collection'):
             # Collection fields
             collection_fields = {
                 self._field['f_res_item_collection']: entity_list_generate(self._document.get('collection'),
@@ -83,24 +84,25 @@ class DocumentEntity(GeneralEntity):
             collection_entity = Entity(
                 api=self._api, fields=collection_fields,
                 bundle_id=self._bundle.get('g_res_item_collection'))
-            # Initialising collection field
-            self._research_data_item[self._bundle.get("g_res_item_collection")] = [collection_entity]
-        else:
-            pass
+            if self._return_value:
+                return collection_entity
+            else:
+                # Initialising collection field
+                self._research_data_item[self._bundle.get("g_res_item_collection")] = [collection_entity]
 
     # Entity list of identifiers
 
     def identifier_entities(self):
         # Initialising DRE Identifier
-        dreId_fields = {
+        _dreidfields_ = {
             self._field['f_research_data_item_id_name']: [self._document.get('dre_id')],
             self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier",
                                                                      self._query.get('identifier'))]
         }
-        dreId_entity = Entity(api=self._api, fields=dreId_fields,
-                              bundle_id=self._bundle['g_research_data_item_identifier'])
+        _dreidentity_ = Entity(api=self._api, fields=_dreidfields_,
+                               bundle_id=self._bundle['g_research_data_item_identifier'])
 
-        entity_list = [dreId_entity]
+        entity_list = [_dreidentity_]
 
         # Remaining Standard Identifiers
         for iden in self._document.get('identifier'):
@@ -118,135 +120,167 @@ class DocumentEntity(GeneralEntity):
 
     # Language
     def language(self):
-        if not self._document.get('language') == []:
+        if self._document.get('language'):
             document_languages = [try_func(l, lambda x: self._language.get(x)) for l in self._document.get('language')]
-            self._research_data_item[self._field.get('f_research_data_item_language')] = entity_list_generate(
+            lang_list = entity_list_generate(
                 document_languages,
                 self._query.get('language'),
                 exception_function=self._field_functions.exception('language'),
                 with_exception=True
             )
-        else:
-            pass
+            if self._return_value:
+                return lang_list
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_language')] = lang_list
 
     # Citation
     def citation(self):
-        if not self._document.get('citation') == []:
-            self._research_data_item[self._field.get('f_research_data_item_citation')] = self._document.get('citation')
-        else:
-            pass
+        if self._document.get('citation'):
+            citation_value = self._document.get('citation')
+            if self._return_value:
+                return citation_value
+            else:
+                self._research_data_item[
+                    self._field.get('f_research_data_item_citation')
+                ] = self._document.get('citation')
 
     # Geographic Location
-    # Country (level 1)
     def originlocation(self):
+
+        _country_values = []
+        _region_values = []
+        _subregion_values = []
+
         for loc_obj in self._origin:
+
+            # Country
             if not pd.isna(loc_obj.get('l1')) and loc_obj.get('l1') != "":
-                self._research_data_item[self._field.get('f_research_data_creat_country')] = [
+                _country_values.append(
                     entity_uri(
                         search_value=loc_obj.get('l1'),
                         query_string=self._query.get('country')
                     )
-                ]
-            else:
-                pass
+                )
 
-    # Region (level 2)
-#   def region(self):
+            # Region (level 2)
             if not pd.isna(loc_obj.get('l2')) and loc_obj.get('l2') != "":
-                region_uri = entity_uri(
-                    search_value=RegionFormatHolder(level_0=loc_obj.get('l2'), level_1=self._origin.get('l1')),
+                _region_uri = entity_uri(
+                    search_value=RegionFormatHolder(level_0=loc_obj.get('l2'), level_1=loc_obj.get('l1')),
                     query_string=self._query.get('region'),
                     conditional=True)
-                self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = [region_uri]
-#                return region_uri
-            else:
-                pass
+                _region_values.append(_region_uri)
 
-    # Subregion
-#    def subregion(self):
-        if not pd.isna(loc_obj.get('l3')) and loc_obj.get('l3') != "":
-            subregion = entity_uri(
-                search_value=RegionFormatHolder(level_0=loc_obj.get('l3'), level_1=loc_obj.get('l2')),
-                query_string=self._query.get('subregion'),
-                conditional=True
-            )
-            if subregion is not None and urlparse(subregion).scheme != '':
-                self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [subregion]
-            elif subregion is None:
-                self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = [
-                    self._field_functions.exception('subregion')(entity_value=loc_obj.get('l3'),
-                                                         qualifier_value=region_uri,
-                                                         with_qualifier=True)
-                ]
-            else:
-                pass
+            # Subregion
+            """
+            In case of an exception we assume, that the region values is already given.
+            """
+            if not pd.isna(loc_obj.get('l3')) and loc_obj.get('l3') != "":
+                _subregion = entity_uri(
+                    search_value=RegionFormatHolder(level_0=loc_obj.get('l3'), level_1=loc_obj.get('l2')),
+                    query_string=self._query.get('subregion'),
+                    conditional=True
+                )
+                if _subregion and urlparse(_subregion).scheme != '':
+                    _subregion_values.append(_subregion)
+                elif not _subregion:
+                    _subregion_values.append(
+                        self._field_functions.exception('subregion')(entity_value=loc_obj.get('l3'),
+                                                                     qualifier_value=_region_uri,
+                                                                     with_qualifier=True)
+                    )
+        if self._return_value:
+            _ol_return_dicts = {}
+            if _country_values:
+                _ol_return_dicts['l1'] = _country_values
+            if _region_values:
+                _ol_return_dicts['l2'] = _region_values
+            if _subregion_values:
+                _ol_return_dicts['l3'] = _subregion_values
+            return _ol_return_dicts
+        else:
+            if _country_values:
+                self._research_data_item[self._field.get('f_research_data_creat_country')] = _country_values
+            if _region_values:
+                self._research_data_item[self._field.get('f_research_data_item_creat_regio')] = _region_values
+            if _subregion_values:
+                self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = _subregion_values
 
     # Current Location
     def currentlocation(self):
-        if not self._document.get('location').get('current') == []:
-            self._research_data_item[
-                self._field.get('f_research_data_item_located_at')
-            ] = entity_list_generate(
+        if self._document.get('location').get('current'):
+            _current_location_value = entity_list_generate(
                 value_list=self._document.get('location').get('current'),
                 query_name=self._query.get('place'),
                 exception_function=self._field_functions.exception('place'),
                 with_exception=True
             )
-        else:
-            pass
+            if self._return_value:
+                return _current_location_value
+            else:
+                self._research_data_item[
+                    self._field.get('f_research_data_item_located_at')
+                ] = _current_location_value
 
     # URL
     def url_link(self):
-        if not self._document.get('url') == []:
-            self._research_data_item[self._field.get('f_research_data_item_url')] = self._document.get('url')
-        else:
-            pass
+        if self._document.get('url'):
+            if self._return_value:
+                return self._document.get('url')
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_url')] = self._document.get('url')
 
     # Copyright
     def copyright(self):
-        if not self._document.get('accessCondition')['rights'] == []:
-            self._research_data_item[self._field.get('f_research_data_item_copyright')] = entity_list_generate(
+        if self._document.get('accessCondition')['rights']:
+            _copyright_values = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
                 self._query.get('license'),
 
             )
-        else:
-            pass
+            if self._return_value:
+                return _copyright_values
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_copyright')] = _copyright_values
 
     # Target Audience
     def target_audience(self):
-        if not self._document.get('targetAudience') == []:
-            self._research_data_item[self._field.get('f_research_data_target_audience')] = entity_list_generate(
+        if self._document.get('targetAudience'):
+            _target_audience_values = entity_list_generate(
                 value_list=self._document.get('targetAudience'),
                 query_name=self._query.get('audience'),
                 exception_function=self._field_functions.exception('audience'),
                 with_exception=True
             )
-        else:
-            pass
+            if self._return_value:
+                return _target_audience_values
+            else:
+                self._research_data_item[self._field.get('f_research_data_target_audience')] = _target_audience_values
 
     # Abstract
     def abstract(self):
-        if not self._document.get('abstract') == [] and pd.isna(self._document.get('abstract')) is False:
-            self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
-        else:
-            pass
+        if self._document.get('abstract') and pd.isna(self._document.get('abstract')) is False:
+            if self._return_value:
+                return [self._document.get('abstract')]
+            else:
+                self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
 
     # Table of Content
     def tabel_of_content(self):
-        if not self._document.get('tableOfContents') == [] and pd.isna(self._document.get('tableOfContents')) is False:
-            self._research_data_item[self._field.get('f_research_data_item_toc')] = [
-                self._document.get('tableOfContents')
-            ]
-        else:
-            pass
+        if self._document.get('tableOfContents') and pd.isna(self._document.get('tableOfContents')) is False:
+            if self._return_value:
+                return [self._document.get('tableOfContents')]
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_toc')] = [
+                    self._document.get('tableOfContents')
+                ]
 
     # Note(s)
     def note(self):
-        if not self._document.get('note') == [] and pd.isna(self._document.get('note')) is False:
-            self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
-        else:
-            pass
+        if self._document.get('note') and pd.isna(self._document.get('note')) is False:
+            if self._return_value:
+                return [self._document.get('note')]
+            else:
+                self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
 
     # Associated Person (Mandatory Field)
     def role(self):
@@ -259,8 +293,6 @@ class DocumentEntity(GeneralEntity):
             sponsor_value = entity_uri(search_value=funder, query_string=self._query.get('sponsor'))
             if sponsor_value is None:
                 sponsor_value = self._field_functions.exception('sponsor')(funder)
-            else:
-                pass
             name_entity_list.append(
                 Entity(api=self._api,
                        fields={
@@ -305,9 +337,10 @@ class DocumentEntity(GeneralEntity):
                            }, bundle_id=self._bundle.get('g_research_data_item_title'))
                 )
         if title_entity_list:
-            self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
-        else:
-            pass
+            if self._return_value:
+                return title_entity_list
+            else:
+                self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
 
     # Dates
     def dateinfo(self):
@@ -335,10 +368,8 @@ class DocumentEntity(GeneralEntity):
                     )
                 except TypeError:
                     pass
-        if additional_dates != []:
+        if additional_dates:
             self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
-        else:
-            pass
 
     # Technical Description
 
@@ -346,7 +377,7 @@ class DocumentEntity(GeneralEntity):
         pd_dict = self._document.get('physicalDescription')
 
         resource_type_dict = {
-        # Type (Mandatory Field)
+            # Type (Mandatory Field)
             self._field.get('f_reseach_data_item_res_type'): [
                 self._document.get('physicalDescription').get('type')
             ]
@@ -354,18 +385,12 @@ class DocumentEntity(GeneralEntity):
         # Method
         if not pd.isna(pd_dict.get('method')):
             resource_type_dict[self._field.get('f_reseach_data_item_res_t_method')] = [pd_dict.get('method')]
-        else:
-            pass
         # Description
-        if not len(pd_dict.get('desc')) == 0:
+        if pd_dict.get('desc'):
             resource_type_dict[self._field.get('f_reseach_data_item_res_t_desc')] = pd_dict.get('desc')
-        else:
-            pass
         # Technical Description Note
-        if not len(pd_dict.get('note')) == 0:
+        if pd_dict.get('note'):
             resource_type_dict[self._field.get('f_reseach_data_item_res_t_descr')] = pd_dict.get('note')
-        else:
-            pass
 
         pd_entity = [Entity(
             api=self._api,
@@ -379,10 +404,8 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._bundle.get('g_reseach_data_item_res_type')] = pd_entity
 
         # Technical Property
-        if not len(pd_dict.get('tech')) == 0:
+        if pd_dict.get('tech'):
             self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = pd_dict.get('tech')
-        else:
-            pass
 
     # Genre
 
@@ -401,9 +424,9 @@ class DocumentEntity(GeneralEntity):
                                        query_string=self._query.get('identifier'))
             for term in genre_terms.get(authority):
                 term_uri = entity_uri(
-                    search_value=GenreFormatHolder(term=term,authority=authority_uri.split('data/')[1]),
-                                      query_string=self._query.get('genre'),
-                                      conditional=True)
+                    search_value=GenreFormatHolder(term=term, authority=authority_uri.split('data/')[1]),
+                    query_string=self._query.get('genre'),
+                    conditional=True)
                 if term_uri is None:
                     genre_entities.append(self._field_functions.exception('genre')(
                         entity_value=term,
@@ -412,67 +435,70 @@ class DocumentEntity(GeneralEntity):
                     ))
                 elif urlparse(term_uri).scheme != '':
                     genre_entities.append(term_uri)
-                else:
-                    pass
-            self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
+
+            if self._return_value:
+                return genre_entities
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
     # Subject
     def subject(self):
-        """
-            if not len(self._document.get('subject')) == 0:
-                self._research_data_item[self._field.get('f_research_data_item_subject')] = entity_list_generate(
-                    value_list=self._document.get('subject'),
-                    query_name=self._query.get('subject'),
-                    exception_function=fieldfunction('subject').exception,
-                    with_exception=True
-                )
-            else:
-                pass
-        """
-        if not len(self._document.get('subject')) == 0:
+        if self._document.get('subject'):
             subject_list = []
             for sub in self._document.get('subject'):
                 by_uri = entity_uri(sub.get('uri'), self._query.get('subjectURI'))
                 by_label = entity_uri(sub.get('origLabel'), self._query.get('subjectLabel'))
-                if by_uri is not None:
+                if by_uri:
                     subject_list.append(by_uri)
-                elif by_label is not None:
+                elif by_label:
                     subject_list.append(by_label)
                 else:
                     subject_fields = {}
                     if not pd.isna(sub.get('uri')):
                         subject_fields[self._field.get('f_subject_url')] = [sub.get('uri')]
-                    else:
-                        pass
                     if not pd.isna(sub.get('authority')):
                         # Authority must be in system already
                         authority_uri = entity_uri(sub.get('authority'), query_string=self._query.get('authorityURL'))
                         subject_fields[self._field.get('f_subject_authority')] = [authority_uri]
-                    else:
-                        pass
-                    if not pd.isna(sub.get('authLabel')):
-                        subject_fields[self._field.get('f_subject_tag')] = [sub.get('authLabel')]
-                    else:
+                    if pd.isna(sub.get('authLabel')):
                         subject_fields[self._field.get('f_subject_tag')] = [sub.get('origLabel')]
+                    else:
+                        subject_fields[self._field.get('f_subject_tag')] = [sub.get('authLabel')]
 
                     subject_list.append(
                         Entity(api=self._api, fields=subject_fields,
                                bundle_id=self._bundle.get('g_subject'))
                     )
-            self._research_data_item[self._field.get('f_research_data_item_subject')] = subject_list
-        else:
-            pass
+            if self._return_value:
+                return subject_list
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_subject')] = subject_list
 
     # Tags
     def tags(self):
-        if not len(self._document.get('tags')) == 0:
-            self._research_data_item[self._field.get('f_reseach_data_item_tag')] = entity_list_generate(
+        if self._document.get('tags'):
+            _tag_values = entity_list_generate(
                 value_list=self._document.get('tags'),
                 query_name=self._query.get('tags'),
                 exception_function=self._field_functions.exception('tags'),
                 with_exception=True
             )
-        else:
+            if self._return_value:
+                return _tag_values
+            else:
+                self._research_data_item[self._field.get('f_reseach_data_item_tag')] = _tag_values
+
+    # URL
+    def preview_image(self):
+        try:
+            if self._document.get('previewImage'):
+                if self._return_value:
+                    return self._document.get('previewImage')
+                else:
+                    self._research_data_item[
+                        self._field.get('f_research_data_item_prv_img_url')
+                    ] = self._document.get('previewImage')
+        except KeyError:
             pass
 
     # Staged Values
@@ -497,11 +523,13 @@ class DocumentEntity(GeneralEntity):
         self.genre()
         self.subject()
         self.tags()
+        self.preview_image()
         return self._research_data_item
 
     def upload(self):
+        stage = self.staging()
         self._api.save(Entity(
             api=self._api,
-            fields=self.staging(),
+            fields=stage,
             bundle_id=self._bundle.get('g_research_data_item')
         ))
