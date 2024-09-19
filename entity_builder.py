@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import NamedTuple
+from typing import NamedTuple, MutableMapping
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -39,13 +39,21 @@ class DocumentEntity(GeneralEntity):
     Class for creating the Research Data Item entity
     """
 
-    def __init__(self, bson_doc, api: Api, return_value: bool = False):
-
+    def __init__(
+        self,
+        bson_doc,
+        api: Api,
+        return_value: bool = False,
+        cache: MutableMapping[str, str] = {},
+    ):
         # Super class
         super().__init__()
 
         # API-client
         self._api = api
+
+        # Entity URI cache
+        self._cache = cache
 
         # BSON Metadata Document
         self._document = bson_doc
@@ -62,15 +70,23 @@ class DocumentEntity(GeneralEntity):
         self._research_data_item = {
 
             # Type of Resource (Mandatory Field)
-            self._field.get('f_research_data_item_type_res'): [
-                entity_uri(self._document.get('typeOfResource'), self._query.get('typeofresource'))],
+            self._field.get("f_research_data_item_type_res"): [
+                entity_uri(
+                    self._document.get("typeOfResource"),
+                    self._query.get("typeofresource"),
+                    cache=self._cache
 
+                )
+            ],
             # Field for Identifiers (Mandatory Field)
             self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
 
             # Project (Mandatory Field)
-            self._field.get('f_research_data_item_project'): [
-                entity_uri(self._document.get('project')['id'], self._query.get('projectid'))]
+            self._field.get("f_research_data_item_project"): [
+                entity_uri(
+                    self._document.get("project")["id"], self._query.get("projectid"), cache=self._cache
+                )
+            ],
         }
     # Collection
 
@@ -95,9 +111,10 @@ class DocumentEntity(GeneralEntity):
     def identifier_entities(self):
         # Initialising DRE Identifier
         _dreidfields_ = {
-            self._field['f_research_data_item_id_name']: [self._document.get('dre_id')],
-            self._field['f_research_data_item_id_type']: [entity_uri("DRE Identifier",
-                                                                     self._query.get('identifier'))]
+            self._field["f_research_data_item_id_name"]: [self._document.get("dre_id")],
+            self._field["f_research_data_item_id_type"]: [
+                entity_uri("DRE Identifier", self._query.get("identifier"), self._cache)
+            ],
         }
         _dreidentity_ = Entity(api=self._api, fields=_dreidfields_,
                                bundle_id=self._bundle['g_research_data_item_identifier'])
@@ -107,9 +124,12 @@ class DocumentEntity(GeneralEntity):
         # Remaining Standard Identifiers
         for iden in self._document.get('identifier'):
             identifier_fields = {
-                self._field['f_research_data_item_id_name']: [iden.get('identifier')],
-                self._field['f_research_data_item_id_type']: [
-                    entity_uri(iden.get('identifier_type'), self._query.get('identifier'))]
+                self._field["f_research_data_item_id_name"]: [iden.get("identifier")],
+                self._field["f_research_data_item_id_type"]: [
+                    entity_uri(
+                        iden.get("identifier_type"), self._query.get("identifier"), self._cache
+                    )
+                ],
             }
             identifier_entity = Entity(api=self._api,
                                        fields=identifier_fields,
@@ -157,17 +177,22 @@ class DocumentEntity(GeneralEntity):
             if not pd.isna(loc_obj.get('l1')) and loc_obj.get('l1') != "":
                 _country_values.append(
                     entity_uri(
-                        search_value=loc_obj.get('l1'),
-                        query_string=self._query.get('country')
+                        search_value=loc_obj.get("l1"),
+                        query_string=self._query.get("country"),
+                        cache=self._cache
                     )
                 )
 
             # Region (level 2)
             if not pd.isna(loc_obj.get('l2')) and loc_obj.get('l2') != "":
                 _region_uri = entity_uri(
-                    search_value=RegionFormatHolder(level_0=loc_obj.get('l2'), level_1=loc_obj.get('l1')),
-                    query_string=self._query.get('region'),
-                    conditional=True)
+                    search_value=RegionFormatHolder(
+                        level_0=loc_obj.get("l2"), level_1=loc_obj.get("l1")
+                    ),
+                    query_string=self._query.get("region"),
+                    conditional=True,
+                    cache=self._cache
+                )
                 _region_values.append(_region_uri)
 
             # Subregion
@@ -176,9 +201,12 @@ class DocumentEntity(GeneralEntity):
             """
             if not pd.isna(loc_obj.get('l3')) and loc_obj.get('l3') != "":
                 _subregion = entity_uri(
-                    search_value=RegionFormatHolder(level_0=loc_obj.get('l3'), level_1=loc_obj.get('l2')),
-                    query_string=self._query.get('subregion'),
-                    conditional=True
+                    search_value=RegionFormatHolder(
+                        level_0=loc_obj.get("l3"), level_1=loc_obj.get("l2")
+                    ),
+                    query_string=self._query.get("subregion"),
+                    conditional=True,
+                    cache=self._cache
                 )
                 if _subregion and urlparse(_subregion).scheme != '':
                     _subregion_values.append(_subregion)
@@ -285,12 +313,16 @@ class DocumentEntity(GeneralEntity):
     # Associated Person (Mandatory Field)
     def role(self):
         name_entity_list = []
-        sponsor_role = entity_uri(search_value='Sponsor', query_string=self._query.get('role'))
+        sponsor_role = entity_uri(
+            search_value="Sponsor", query_string=self._query.get("role"), cache=self._cache
+        )
 
         # Sponsor (Associated Group) (mandatory field)
         # Fetches sponsor uri/creates Entity object in case of exception
-        for funder in self._document.get('sponsor'):
-            sponsor_value = entity_uri(search_value=funder, query_string=self._query.get('sponsor'))
+        for funder in self._document.get("sponsor"):
+            sponsor_value = entity_uri(
+                search_value=funder, query_string=self._query.get("sponsor"), cache=self._cache
+            )
             if sponsor_value is None:
                 sponsor_value = self._field_functions.exception('sponsor')(funder)
             name_entity_list.append(
@@ -308,17 +340,24 @@ class DocumentEntity(GeneralEntity):
                 'institution': 'f_research_data_item_role_hldr_i'
             }
             name_entity_list.append(
-                Entity(api=self._api,
-                       fields={
-                           self._field.get(ass_entity_type.get(qualifier)): [entity_uri(
-                               search_value=name.get('name').get('label'),
-                               query_string=self._query.get(qualifier)
-                           )],
-                           self._field.get('f_research_data_item_apers_role'): [entity_uri(
-                               search_value=name.get('role'),
-                               query_string=self._query.get('role')
-                           )]
-                       }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
+                Entity(
+                    api=self._api,
+                    fields={
+                        self._field.get(ass_entity_type.get(qualifier)): [
+                            entity_uri(
+                                search_value=name.get("name").get("label"),
+                                query_string=self._query.get(qualifier), cache=self._cache
+                            )
+                        ],
+                        self._field.get("f_research_data_item_apers_role"): [
+                            entity_uri(
+                                search_value=name.get("role"),
+                                query_string=self._query.get("role"),cache=self._cache
+                            )
+                        ],
+                    },
+                    bundle_id=self._bundle.get("g_research_data_item_ass_person"),
+                )
             )
         self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
 
@@ -420,13 +459,20 @@ class DocumentEntity(GeneralEntity):
         genre_entities = []
         genre_terms = self._document.get('genre')
         for authority in genre_terms.keys():
-            authority_uri = entity_uri(search_value=genre_dict.get(authority),
-                                       query_string=self._query.get('identifier'))
+            authority_uri = entity_uri(
+                search_value=genre_dict.get(authority),
+                query_string=self._query.get("identifier"),
+                cache=self._cache
+            )
             for term in genre_terms.get(authority):
                 term_uri = entity_uri(
-                    search_value=GenreFormatHolder(term=term, authority=authority_uri.split('data/')[1]),
-                    query_string=self._query.get('genre'),
-                    conditional=True)
+                    search_value=GenreFormatHolder(
+                        term=term, authority=authority_uri.split("data/")[1]
+                    ),
+                    query_string=self._query.get("genre"),
+                    conditional=True,
+                    cache=self._cache
+                )
                 if term_uri is None:
                     genre_entities.append(self._field_functions.exception('genre')(
                         entity_value=term,
@@ -445,9 +491,12 @@ class DocumentEntity(GeneralEntity):
     def subject(self):
         if self._document.get('subject'):
             subject_list = []
-            for sub in self._document.get('subject'):
-                by_uri = entity_uri(sub.get('uri'), self._query.get('subjectURI'))
-                by_label = entity_uri(sub.get('origLabel'), self._query.get('subjectLabel'))
+            for sub in self._document.get("subject"):
+
+                by_uri = entity_uri(sub.get("uri"), self._query.get("subjectURI"),cache=self._cache)
+                by_label = entity_uri(
+                    sub.get("origLabel"), self._query.get("subjectLabel"),cache=self._cache
+                )
                 if by_uri:
                     subject_list.append(by_uri)
                 elif by_label:
@@ -458,10 +507,17 @@ class DocumentEntity(GeneralEntity):
                         subject_fields[self._field.get('f_subject_url')] = [sub.get('uri')]
                     if not pd.isna(sub.get('authority')):
                         # Authority must be in system already
-                        authority_uri = entity_uri(sub.get('authority'), query_string=self._query.get('authorityURL'))
-                        subject_fields[self._field.get('f_subject_authority')] = [authority_uri]
-                    if pd.isna(sub.get('authLabel')):
-                        subject_fields[self._field.get('f_subject_tag')] = [sub.get('origLabel')]
+                        authority_uri = entity_uri(
+                            sub.get("authority"),
+                            query_string=self._query.get("authorityURL"),cache=self._cache
+                        )
+                        subject_fields[self._field.get("f_subject_authority")] = [
+                            authority_uri
+                        ]
+                    if pd.isna(sub.get("authLabel")):
+                        subject_fields[self._field.get("f_subject_tag")] = [
+                            sub.get("origLabel")
+                        ]
                     else:
                         subject_fields[self._field.get('f_subject_tag')] = [sub.get('authLabel')]
 

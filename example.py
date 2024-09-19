@@ -11,6 +11,7 @@ api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
 
 # pathbuilder_save("https://www.wisski.uni-bayreuth.de/sites/default/files/wisski_pathbuilder/export/amo_ecrm__v01_dev_pb_20240821T122919")
 data = functions.mongodata_fetch("projects_metadata_ubt", "UBT_DigiRet2022")
+cache: dict[str, str] = {}
 for row in tqdm(data[:100]):
     staged = DocumentEntity(row, api).staging()
 
