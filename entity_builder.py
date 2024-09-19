@@ -141,7 +141,7 @@ class DocumentEntity(GeneralEntity):
     # Language
     def language(self):
         if self._document.get('language'):
-            document_languages = [try_func(l.lower(), lambda x: self._language.get(x)) for l.lower() in self._document.get('language')]
+            document_languages = [try_func(l.lower(), lambda x: self._language.get(x)) for l in self._document.get('language')]
             lang_list = entity_list_generate(
                 document_languages,
                 self._query.get('language'),
