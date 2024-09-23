@@ -40,7 +40,7 @@ class DocumentEntity(GeneralEntity):
     Class for creating the Research Data Item entity
     """
 
-    def __init__(self, bson_doc, api: Api, return_value: bool = False):
+    def __init__(self, api: Api, return_value: bool = False):
 
         # Super class
         super().__init__()
@@ -49,30 +49,32 @@ class DocumentEntity(GeneralEntity):
         self._api = api
 
         # BSON Metadata Document
-        self._document = bson_doc
+        self._document = None
 
         # Function to return Entity values (Bool)
         self._return_value = return_value
 
-        # GeoLoc Information
-        self._origin = self._document.get('location').get('origin')
-
+        # Initialising FieldFunction
         self._field_functions = FieldFunctions(self._api)
 
-        # Core dictionary for Research Data Items
-        self._research_data_item = {
+        # Research Data Item Attribute
+        self._research_data_item = {}
 
-            # Type of Resource (Mandatory Field)
-            self._field.get('f_research_data_item_type_res'): [
-                entity_uri(self._document.get('typeOfResource'), self._query.get('typeofresource'))],
+    def document(self, bson_document: dict):
+        setattr(self, "_document", bson_document)
 
-            # Field for Identifiers (Mandatory Field)
-            self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
+    # Type of Resource (Mandatory Field)
+    def resource_type(self):
+        self._research_data_item[self._field.get('f_research_data_item_type_res')] = [
+                entity_uri(self._document.get('typeOfResource'), self._query.get('typeofresource'))
+        ]
 
-            # Project (Mandatory Field)
-            self._field.get('f_research_data_item_project'): [
-                entity_uri(self._document.get('project')['id'], self._query.get('projectid'))]
-        }
+    # Project (Mandatory Field)
+    def project(self):
+        self._research_data_item[self._field.get('f_research_data_item_project')] = [
+                entity_uri(self._document.get('project')['id'], self._query.get('projectid'))
+        ]
+
     # Collection
 
     def collection(self):
@@ -117,7 +119,10 @@ class DocumentEntity(GeneralEntity):
                                        bundle_id=self._bundle['g_research_data_item_identifier'])
             entity_list.append(identifier_entity)
 
-        return entity_list
+        if self._return_value:
+            return entity_list
+        else:
+            self._research_data_item[self._bundle.get('g_research_data_item_identifier')] = [entity_list]
 
     # Language
     def language(self):
@@ -147,12 +152,13 @@ class DocumentEntity(GeneralEntity):
 
     # Geographic Location
     def originlocation(self):
+        _origin = self._document.get('location').get('origin')
 
         _country_values = []
         _region_values = []
         _subregion_values = []
 
-        for loc_obj in self._origin:
+        for loc_obj in _origin:
 
             # Country
             if not pd.isna(loc_obj.get('l1')) and loc_obj.get('l1') != "":
@@ -504,6 +510,8 @@ class DocumentEntity(GeneralEntity):
     # Staged Values
 
     def staging(self):
+        self.resource_type()
+        self.project()
         self.collection()
         self.identifier_entities()
         self.language()
