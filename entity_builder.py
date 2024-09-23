@@ -113,7 +113,7 @@ class DocumentEntity(GeneralEntity):
         _dreidfields_ = {
             self._field["f_research_data_item_id_name"]: [self._document.get("dre_id")],
             self._field["f_research_data_item_id_type"]: [
-                entity_uri("DRE Identifier", self._query.get("identifier"), self._cache)
+                entity_uri("DRE Identifier", self._query.get("identifier"), cache=self._cache)
             ],
         }
         _dreidentity_ = Entity(api=self._api, fields=_dreidfields_,
@@ -127,7 +127,7 @@ class DocumentEntity(GeneralEntity):
                 self._field["f_research_data_item_id_name"]: [iden.get("identifier")],
                 self._field["f_research_data_item_id_type"]: [
                     entity_uri(
-                        iden.get("identifier_type"), self._query.get("identifier"), self._cache
+                        iden.get("identifier_type"), self._query.get("identifier"), cache=self._cache
                     )
                 ],
             }
