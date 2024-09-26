@@ -149,6 +149,17 @@ class DocumentUpdate(DocumentEntity):
                             field_name=self._field.get('f_research_data_note'),
                             default_values=self.note()
                         ).format(field=_method_value))
+                
+                case 'subject':
+                    if dry_run:
+                        print(self.subject())
+                    else:
+                        print(self.build(
+                            push_new_value=value_append,
+                            push_value=new_value,
+                            field_name=self._field.get('f_research_data_item_subject'),
+                            default_values=self.subject()
+                        ).format(field=_method_value))
 
                 case _:
                     print(f'No field found with name {_method_value}')
