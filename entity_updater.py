@@ -1,3 +1,10 @@
+# Libraries
+from entity_builder import DocumentEntity
+from wisski.api import Api, Entity
+from functions import entity_uri
+from types import MethodType
+from pymongo import cursor
+
 # Summary
 """
 This class file holds the class used for updating pre-existing WissKI enities
@@ -13,22 +20,16 @@ The class wil use the update the specified field.
 Ouput: Success report
 """
 
-# Libraries
-from entity_builder import DocumentEntity
-from wisski.api import Api, Entity
-from functions import entity_uri
-from types import MethodType
-from pymongo import cursor
 
 class DocumentUpdate(DocumentEntity):
 
     def __init__(self, api: Api,
                  method: str | list[str],
-                 mongo_data: cursor):
+                 mongo_data: list):
 
         # Local initialisation
         self._api = api
-        self._bson_doc_list = list(mongo_data)
+        self._bson_doc_list = mongo_data
         self._method = method if isinstance(method, list) else [method]
         self._edit_entity = None
 
@@ -54,129 +55,106 @@ class DocumentUpdate(DocumentEntity):
                     )
                     )
 
-            if not dry_run:
-                print(f"Updating fields for the DRE ID: {doc.get('dre_id')}")
-
             for _method_value in self._method:
+
+                kwargs = {
+                    "doc_id": doc.get('dre_id'),
+                    "method": _method_value,
+                    "dry_run": dry_run,
+                    "push_new_value": value_append,
+                    "push_value": new_value
+                    }
 
                 match _method_value:
 
                     case 'collection':
-                        if dry_run:
-                            print(self.collection())
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._bundle.get("g_res_item_collection"),
-                                default_values=self.collection()
-                            ).format(field=_method_value))
-                    # Todo: Identifier field case to be added
+                        self.build(
+                            **kwargs,
+                            field_name=self._bundle.get("g_res_item_collection"),
+                            default_values=self.collection()
+                        )
 
                     case 'langauge':
-                        if dry_run:
-                            print(self.language())
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._field.get('f_research_data_item_language'),
-                                default_values=self.language()
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_language'),
+                            default_values=self.language()
+                        )
 
                     case 'citation':
-                        if dry_run:
-                            print(self.citation())
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._field.get('f_research_data_item_citation'),
-                                default_values=self.citation()
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_citation'),
+                            default_values=self.citation()
+                            )
 
                     case 'country':
-                        if dry_run:
-                            print(self.originlocation().get('l1'))
-                        else:
-                            print(self.build(
-                                 push_new_value=value_append,
-                                 push_value=new_value,
-                                 field_name=self._field.get('f_research_data_creat_country'),
-                                 default_values=self.originlocation().get('l1')
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_creat_country'),
+                            default_values=self.originlocation().get('l1')
+                            )
 
                     case 'region':
-                        if dry_run:
-                            print(self.originlocation().get('l2'))
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._field.get('f_research_data_creat_regio'),
-                                default_values=self.originlocation().get('l2')
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_creat_regio'),
+                            default_values=self.originlocation().get('l2')
+                            )
 
                     case 'subregion':
-                        if dry_run:
-                            print(self.originlocation().get('l3'))
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._field.get('f_research_data_creat_subre'),
-                                default_values=self.originlocation().get('l3')
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_creat_subre'),
+                            default_values=self.originlocation().get('l3')
+                            )
 
                     case 'currentLocation':
-                        if dry_run:
-                            print(self.currentlocation())
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._field.get('f_research_data_item_located_at'),
-                                default_values=self.currentlocation()
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_located_at'),
+                            default_values=self.currentlocation()
+                            )
 
                     case 'physicalDesc':
-                        if dry_run:
-                            print(self.physicaldesc())
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._bundle.get('g_reseach_data_item_res_type'),
-                                default_values=self.physicaldesc()
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._bundle.get('g_reseach_data_item_res_type'),
+                            default_values=self.physicaldesc()
+                            )
 
                     case 'note':
-                        if dry_run:
-                            print(self.note())
-                        else:
-                            print(self.build(
-                                push_new_value=value_append,
-                                push_value=new_value,
-                                field_name=self._field.get('f_research_data_note'),
-                                default_values=self.note()
-                            ).format(field=_method_value))
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_note'),
+                            default_values=self.note()
+                            )
 
                     case _:
                         print(f'No field found with name {_method_value}')
 
+            if not dry_run:
                 print("All updates completed.")
 
     def build(self,
+              doc_id: str,
+              method: str,
+              dry_run: bool = False,
               push_new_value: bool = False,
               push_value=None,
               field_name=None,
               default_values: MethodType = None) -> str:
-        try:
-            if push_new_value:
-                self._edit_entity.fields[field_name] = self._edit_entity.fields[field_name].append(push_value)
-            else:
-                self._edit_entity.fields[field_name] = default_values
-            self._api.save(self._edit_entity)
-            return "{field} updated!"
-        except:
-            return "{field} was not updated. Please check values passed."
+        if dry_run:
+            print("Dry run initiated, preview values given below:\n")
+            print(default_values)
+        else:
+            print(f"Updating fields for the DRE ID: {doc_id}")
+            try:
+                if push_new_value:
+                    self._edit_entity.fields[field_name] = self._edit_entity.fields[field_name].append(push_value)
+                else:
+                    self._edit_entity.fields[field_name] = default_values
+                self._api.save(self._edit_entity)
+                print("{field} updated!".format(field=method))
+            except KeyError:
+                print("{field} was not updated. Please check values passed.".format(field=method))
