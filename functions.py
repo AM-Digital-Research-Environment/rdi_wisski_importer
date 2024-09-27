@@ -30,13 +30,16 @@ def load_config(config_file='dicts/functions_config.json'):
         raise ValueError(f"Invalid JSON in config file: {config_path}")
 
 
-def mongodata_fetch(db_name, collection_name, as_list: bool = True):
+def mongodata_fetch(db_name, collection_name, as_list: bool = True, filter_str: dict | None = None):
     config = load_config()
     client = MongoClient(config['mongo_uri'])
     db = client[db_name]
     collection = db[collection_name]
     if as_list:
-        return list(collection.find())
+        if filter_str:
+            return list(collection.find(filter_str))
+        else:
+            return list(collection.find())
     else:
         return collection
 
@@ -46,7 +49,7 @@ def mongodata_fetch(db_name, collection_name, as_list: bool = True):
 # Incase entity does not exist, the function return the np.nan
 
 
-@functools.cache
+#@functools.cache
 def entity_uri(search_value: Union[str, NamedTuple],
                query_string: str,
                return_format='json',
