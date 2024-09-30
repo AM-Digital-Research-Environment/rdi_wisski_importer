@@ -14,6 +14,7 @@ For authentication information (MongoDB Client bot URI and functions_config.json
 To avoid internal setup routines from running over and over again, we expect a pre-configured instance of `wisski_py.Api` to be injected into the `DocumentEntity`:
 
 ``` python
+# Fill in the WissKI API username and password 
 api = Api(
     "https://www.wisski.uni-bayreuth.de/wisski/api/v0",
     auth=("some_username", "super_secure_password"),
@@ -21,9 +22,13 @@ api = Api(
 )
 api.pathbuilders = ["amo_ecrm__v01_dev_pb"]
 
-data = fetch_the_data()
-for row in data:
-    staged = DocumentEntity(row, api).staging()
+data = fetch_the_data(db_name, collection_name)
+
+# Run as a loop
+for row in tqdm(data[:100]):
+    doc = DocumentEntity(api=api, bson_doc=row)
+    doc.staging()
+    doc.upload()
 ```
 
 Also see [the example](example.py).
