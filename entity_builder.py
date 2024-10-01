@@ -20,7 +20,7 @@ class RegionFormatHolder(NamedTuple):
     """
     level_0: str
     level_1: str
-      
+
 
 class GenreFormatHolder(NamedTuple):
     """
@@ -41,7 +41,6 @@ class DocumentEntity(GeneralEntity):
 
     def __init__(
         self,
-        bson_doc,
         api: Api,
         return_value: bool = False,
         cache: MutableMapping[str, str] = {},
@@ -52,44 +51,45 @@ class DocumentEntity(GeneralEntity):
         # API-client
         self._api = api
 
+        # BSON Metadata Document
+        self._document = None
+    
         # Entity URI cache
         self._cache = cache
-
-        # BSON Metadata Document
-        self._document = bson_doc
 
         # Function to return Entity values (Bool)
         self._return_value = return_value
 
-        # GeoLoc Information
-        self._origin = self._document.get('location').get('origin')
-
         self._field_functions = FieldFunctions(self._api)
 
         # Core dictionary for Research Data Items
-        self._research_data_item = {
+        self._research_data_item = {}
+      
+      
+    def document(self, bson_document: dict):
+        setattr(self, "_document", bson_document)
 
-            # Type of Resource (Mandatory Field)
-            self._field.get("f_research_data_item_type_res"): [
-                entity_uri(
-                    self._document.get("typeOfResource"),
-                    self._query.get("typeofresource"),
-                    cache=self._cache
+    # Type of Resource (Mandatory Field)
+    def resource_type(self):
+        self._research_data_item[self._field.get('f_research_data_item_type_res')] = [
+            entity_uri(
+              self._document.get('typeOfResource'),
+              self._query.get('typeofresource'),
+              cache=self._cache
+            )
+        ]
 
-                )
-            ],
-            # Field for Identifiers (Mandatory Field)
-            self._bundle.get('g_research_data_item_identifier'): self.identifier_entities(),
+    # Project (Mandatory Field)
+    def project(self):
+        self._research_data_item[self._field.get('f_research_data_item_project')] = [
+            entity_uri(
+              self._document.get('project')['id'],
+              self._query.get('projectid'),
+              cache=self._cache
+            )
+        ]
 
-            # Project (Mandatory Field)
-            self._field.get("f_research_data_item_project"): [
-                entity_uri(
-                    self._document.get("project")["id"], self._query.get("projectid"), cache=self._cache
-                )
-            ],
-        }
     # Collection
-
     def collection(self):
         if self._document.get('collection'):
             # Collection fields
@@ -136,7 +136,10 @@ class DocumentEntity(GeneralEntity):
                                        bundle_id=self._bundle['g_research_data_item_identifier'])
             entity_list.append(identifier_entity)
 
-        return entity_list
+        if self._return_value:
+            return entity_list
+        else:
+            self._research_data_item[self._bundle.get('g_research_data_item_identifier')] = [entity_list]
 
     # Language
     def language(self):
@@ -166,13 +169,12 @@ class DocumentEntity(GeneralEntity):
 
     # Geographic Location
     def originlocation(self):
-
+        _origin = self._document.get('location').get('origin')
         _country_values = []
         _region_values = []
         _subregion_values = []
 
-        for loc_obj in self._origin:
-
+        for loc_obj in _origin:
             # Country
             if not pd.isna(loc_obj.get('l1')) and loc_obj.get('l1') != "":
                 _country_values.append(
@@ -263,7 +265,6 @@ class DocumentEntity(GeneralEntity):
             _copyright_values = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
                 self._query.get('license'),
-
             )
             if self._return_value:
                 return _copyright_values
@@ -306,9 +307,9 @@ class DocumentEntity(GeneralEntity):
     def note(self):
         if self._document.get('note') and pd.isna(self._document.get('note')) is False:
             if self._return_value:
-                return [self._document.get('note')]
+                return self._document.get('note')
             else:
-                self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
+                self._research_data_item[self._field.get('f_research_data_note')] = self._document.get('note')
 
     # Associated Person (Mandatory Field)
     def role(self):
@@ -323,6 +324,7 @@ class DocumentEntity(GeneralEntity):
             sponsor_value = entity_uri(
                 search_value=funder, query_string=self._query.get("sponsor"), cache=self._cache
             )
+            
             if sponsor_value is None:
                 sponsor_value = self._field_functions.exception('sponsor')(funder)
             name_entity_list.append(
@@ -346,13 +348,15 @@ class DocumentEntity(GeneralEntity):
                         self._field.get(ass_entity_type.get(qualifier)): [
                             entity_uri(
                                 search_value=name.get("name").get("label"),
-                                query_string=self._query.get(qualifier), cache=self._cache
+                                query_string=self._query.get(qualifier),
+                                cache=self._cache
                             )
                         ],
                         self._field.get("f_research_data_item_apers_role"): [
                             entity_uri(
                                 search_value=name.get("role"),
-                                query_string=self._query.get("role"),cache=self._cache
+                                query_string=self._query.get("role"),
+                                cache=self._cache
                             )
                         ],
                     },
@@ -473,6 +477,7 @@ class DocumentEntity(GeneralEntity):
                     conditional=True,
                     cache=self._cache
                 )
+        
                 if term_uri is None:
                     genre_entities.append(self._field_functions.exception('genre')(
                         entity_value=term,
@@ -493,10 +498,11 @@ class DocumentEntity(GeneralEntity):
             subject_list = []
             for sub in self._document.get("subject"):
 
-                by_uri = entity_uri(sub.get("uri"), self._query.get("subjectURI"),cache=self._cache)
+                by_uri = entity_uri(sub.get("uri"), self._query.get("subjectURI"), cache=self._cache)
                 by_label = entity_uri(
-                    sub.get("origLabel"), self._query.get("subjectLabel"),cache=self._cache
+                    sub.get("origLabel"), self._query.get("subjectLabel"), cache=self._cache
                 )
+
                 if by_uri:
                     subject_list.append(by_uri)
                 elif by_label:
@@ -509,7 +515,8 @@ class DocumentEntity(GeneralEntity):
                         # Authority must be in system already
                         authority_uri = entity_uri(
                             sub.get("authority"),
-                            query_string=self._query.get("authorityURL"),cache=self._cache
+                            query_string=self._query.get("authorityURL"),
+                            cache=self._cache
                         )
                         subject_fields[self._field.get("f_subject_authority")] = [
                             authority_uri
@@ -518,6 +525,7 @@ class DocumentEntity(GeneralEntity):
                         subject_fields[self._field.get("f_subject_tag")] = [
                             sub.get("origLabel")
                         ]
+
                     else:
                         subject_fields[self._field.get('f_subject_tag')] = [sub.get('authLabel')]
 
@@ -560,6 +568,8 @@ class DocumentEntity(GeneralEntity):
     # Staged Values
 
     def staging(self):
+        self.resource_type()
+        self.project()
         self.collection()
         self.identifier_entities()
         self.language()
@@ -583,9 +593,8 @@ class DocumentEntity(GeneralEntity):
         return self._research_data_item
 
     def upload(self):
-        stage = self.staging()
         self._api.save(Entity(
             api=self._api,
-            fields=stage,
+            fields=self.staging(),
             bundle_id=self._bundle.get('g_research_data_item')
         ))

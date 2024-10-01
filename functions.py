@@ -9,13 +9,13 @@ Created on Tue May 28 15:17:50 2024
 import io
 import json
 from typing import Callable, NamedTuple, Union, MutableMapping
+
 from pathlib import Path
 
 import pandas as pd
 from pymongo import MongoClient
 from SPARQLWrapper import CSV, JSON, SPARQLWrapper
-from pathlib import Path
-import os
+
 # Function for fetching all documents belong to a DB and Collection
 
 
@@ -30,22 +30,24 @@ def load_config(config_file='dicts/functions_config.json'):
         raise ValueError(f"Invalid JSON in config file: {config_path}")
 
 
-def mongodata_fetch(db_name, collection_name, as_list: bool = True):
+def mongodata_fetch(db_name, collection_name, as_list: bool = True, filter_str: dict | None = None):
     config = load_config()
     client = MongoClient(config['mongo_uri'])
     db = client[db_name]
     collection = db[collection_name]
     if as_list:
-        return list(collection.find())
+        if filter_str:
+            return list(collection.find(filter_str))
+        else:
+            return list(collection.find())
     else:
         return collection
 
 
 # Function for the entity retrieval
 # This function checks for the existence of entity and return the WissKI for the same,
+
 # In case entity does not exist, the function return the np.nan
-
-
 def entity_uri(
     search_value: Union[str, NamedTuple],
     query_string: str,
@@ -57,6 +59,7 @@ def entity_uri(
     cache_key = f"{search_value}_{hash(query_string)}"
     if cache_key in cache:
         return cache[cache_key]
+
     # Load graphdb sparql configuration
     config = load_config()
     format_dict = {'json': JSON, 'csv': CSV}
