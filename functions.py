@@ -6,10 +6,10 @@ Created on Tue May 28 15:17:50 2024
 """
 
 # Library Imports
-import functools
 import io
 import json
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple, Union, MutableMapping
+
 from pathlib import Path
 
 import pandas as pd
@@ -46,16 +46,20 @@ def mongodata_fetch(db_name, collection_name, as_list: bool = True, filter_str: 
 
 # Function for the entity retrieval
 # This function checks for the existence of entity and return the WissKI for the same,
-# Incase entity does not exist, the function return the np.nan
 
+# In case entity does not exist, the function return the np.nan
+def entity_uri(
+    search_value: Union[str, NamedTuple],
+    query_string: str,
+    return_format="json",
+    value_input=True,
+    conditional=False,
+    cache: MutableMapping[str, str] = {},
+) -> str | object | None:
+    cache_key = f"{search_value}_{hash(query_string)}"
+    if cache_key in cache:
+        return cache[cache_key]
 
-#@functools.cache
-def entity_uri(search_value: Union[str, NamedTuple],
-               query_string: str,
-               return_format='json',
-               value_input=True,
-               conditional=False) -> str | object | None:
-    # IDEA: fetch all entity URIs and cache them
     # Load graphdb sparql configuration
     config = load_config()
     format_dict = {'json': JSON, 'csv': CSV}
@@ -74,7 +78,9 @@ def entity_uri(search_value: Union[str, NamedTuple],
     query_response = sparql.queryAndConvert()
     if return_format == 'json':
         try:
-            return query_response["results"]["bindings"][0]['id']['value']
+            val = str(query_response["results"]["bindings"][0]["id"]["value"])
+            cache[cache_key] = val
+            return val
         except IndexError:
             return None
     elif return_format == 'csv':

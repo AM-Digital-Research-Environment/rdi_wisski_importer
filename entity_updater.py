@@ -74,7 +74,7 @@ class DocumentUpdate(DocumentEntity):
                             default_values=self.collection()
                         )
 
-                    case 'langauge':
+                    case 'language':
                         self.build(
                             **kwargs,
                             field_name=self._field.get('f_research_data_item_language'),
