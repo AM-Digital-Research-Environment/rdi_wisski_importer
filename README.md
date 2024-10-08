@@ -19,10 +19,10 @@ api = Api(
     auth=("your_wisski_username", "your_wisski_password"),
     headers={"Cache-Control": "no-cache"}
     )
-api.pathbuilders = ["pathbuilder_of _choice"]
+api.pathbuilders = ["pathbuilder_of_choice"]
 
 # Fetching you data from source (in this case, MongoDB)
-data = fetch_the_data()
+data = mongodata_fetch("projects_metadata_ubt", "UBT_DigiRet2022")
 
 # Instantiate a Document entity Class object
 uploader = DocumentEntity(api)
@@ -34,7 +34,7 @@ uploader.document(data[0])
 uploader.staging()
 
 # To uploaded staged data
-uploader.uploader()
+uploader.upload()
 
 # Iterate through documents to do multiple uploads
 for row in data:
