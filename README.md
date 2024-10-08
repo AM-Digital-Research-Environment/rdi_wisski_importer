@@ -22,7 +22,7 @@ api = Api(
 api.pathbuilders = ["pathbuilder_of_choice"]
 
 # Fetching you data from source (in this case, MongoDB)
-data = mongodata_fetch("projects_metadata_ubt", "UBT_DigiRet2022")
+data = mongodata_fetch("project name", "collection name")
 
 # Instantiate a Document entity Class object
 uploader = DocumentEntity(api)
