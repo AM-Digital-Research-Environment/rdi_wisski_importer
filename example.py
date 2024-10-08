@@ -23,18 +23,14 @@ uploader.document(data[0])
 uploader.staging()
 
 # To uploaded staged data
-uploader.uploader()
+uploader.upload()
 
 # Iterate through documents to do multiple uploads
 for row in tqdm(data):
     uploader.document(row)
     uploader.upload()
 
-# Run as a loop
-for row in tqdm(data[:100]):
-    doc = DocumentEntity(api=api, bson_doc=row)
-    doc.staging()
-    doc.upload()
+
     
 # 2. WissKi entity sync-up
 from wisski.api import Api
