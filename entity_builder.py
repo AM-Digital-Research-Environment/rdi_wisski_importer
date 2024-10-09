@@ -139,7 +139,7 @@ class DocumentEntity(GeneralEntity):
         if self._return_value:
             return entity_list
         else:
-            self._research_data_item[self._bundle.get('g_research_data_item_identifier')] = [entity_list]
+            self._research_data_item[self._bundle.get('g_research_data_item_identifier')] = entity_list
 
     # Language
     def language(self):
