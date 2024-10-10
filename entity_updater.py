@@ -133,8 +133,8 @@ class DocumentUpdate(DocumentEntity):
                     case _:
                         print(f'No field found with name {_method_value}')
 
-        if not dry_run:
-            print("All updates completed.")
+    if not dry_run:
+        print("All updates completed.")
 
     def build(self,
               doc_id: str,
