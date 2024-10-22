@@ -307,7 +307,7 @@ class DocumentEntity(GeneralEntity):
     def note(self):
         if self._document.get('note') and pd.isna(self._document.get('note')) is False:
             if self._return_value:
-                return self._document.get('note')
+                return [self._document.get('note')]
             else:
                 self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
 
