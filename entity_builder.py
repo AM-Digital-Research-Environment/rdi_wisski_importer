@@ -307,7 +307,7 @@ class DocumentEntity(GeneralEntity):
     def note(self):
         if self._document.get('note') and pd.isna(self._document.get('note')) is False:
             if self._return_value:
-                return self._document.get('note')
+                return [self._document.get('note')]
             else:
                 self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
 
@@ -370,7 +370,7 @@ class DocumentEntity(GeneralEntity):
         title_entity_list = []
         for title in self._document.get('titleInfo'):
             if title.get('title_type') == 'main':
-                self._research_data_item[self._field.get('f_research_data_item_title_main')] = [title.get('title')]
+                _main_title = [title.get('title')]
             else:
                 title_entity_list.append(
                     Entity(api=self._api,
@@ -381,8 +381,9 @@ class DocumentEntity(GeneralEntity):
                 )
         if title_entity_list:
             if self._return_value:
-                return title_entity_list
+                return {'main': _main_title, 'alt': title_entity_list}
             else:
+                self._research_data_item[self._field.get('f_research_data_item_title_main')] = _main_title
                 self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
 
     # Dates
