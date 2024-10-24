@@ -129,7 +129,42 @@ class DocumentUpdate(DocumentEntity):
                             field_name=self._field.get('f_research_data_note'),
                             default_values=self.note()
                             )
-
+                    
+                    case 'tags':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_reseach_data_item_tag'),
+                            default_values=self.tags()
+                            )
+                    
+                    case 'targetAudience':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_target_audience'),
+                            default_values=self.target_audience()
+                            )
+                    
+                    case 'url':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_url'),
+                            default_values=self.url_link()
+                            )
+                    
+                    case 'mainTitle':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_title_main'), 
+                            default_values=self.titles()['main']
+                            )
+                    
+                    case 'altTitles':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('g_research_data_item_title'),
+                            default_values=self.titles()['alt']
+                            )
+                    
                     case _:
                         print(f'No field found with name {_method_value}')
 
