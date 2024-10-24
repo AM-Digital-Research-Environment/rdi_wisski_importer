@@ -379,11 +379,12 @@ class DocumentEntity(GeneralEntity):
                                self._field.get('f_research_data_item_title_type'): [title.get('title_type')]
                            }, bundle_id=self._bundle.get('g_research_data_item_title'))
                 )
-        if title_entity_list:
-            if self._return_value:
-                return {'main': _main_title, 'alt': title_entity_list}
-            else:
-                self._research_data_item[self._field.get('f_research_data_item_title_main')] = _main_title
+        
+        if self._return_value:
+            return {'main': _main_title, 'alt': title_entity_list}
+        else:
+            self._research_data_item[self._field.get('f_research_data_item_title_main')] = _main_title
+            if title_entity_list:
                 self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
 
     # Dates
