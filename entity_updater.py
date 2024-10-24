@@ -156,14 +156,14 @@ class DocumentUpdate(DocumentEntity):
                             **kwargs,
                             field_name=self._field.get('f_research_data_item_title_main'), 
                             default_values=self.titles()['main']
-                            )
+                        )
                     
-                    case 'altTitles':
+                    case 'altTitles':                            
                         self.build(
                             **kwargs,
                             field_name=self._field.get('g_research_data_item_title'),
                             default_values=self.titles()['alt']
-                            )
+                        )
                     
                     case _:
                         print(f'No field found with name {_method_value}')
