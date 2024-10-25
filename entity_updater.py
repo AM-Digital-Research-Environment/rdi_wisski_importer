@@ -154,7 +154,7 @@ class DocumentUpdate(DocumentEntity):
                     case 'mainTitle':
                         self.build(
                             **kwargs,
-                            field_name=self._field.get('f_research_data_item_title_main'), 
+                            field_name=self._field.get('f_research_data_item_title_main'),
                             default_values=self.titles()['main']
                         )
                     
@@ -187,9 +187,13 @@ class DocumentUpdate(DocumentEntity):
             try:
                 if push_new_value:
                     self._edit_entity.fields[field_name] = self._edit_entity.fields[field_name].append(push_value)
+                    self._api.save(self._edit_entity)
                 else:
-                    self._edit_entity.fields[field_name] = default_values
-                self._api.save(self._edit_entity)
+                    if default_values:
+                        self._edit_entity.fields[field_name] = default_values
+                        self._api.save(self._edit_entity)
+                    else:
+                        print('No values were found in staged list. Hence process was aborted.')
                 print("{field} updated!".format(field=method))
             except KeyError:
                 print("{field} was not updated. Please check values passed.".format(field=method))
