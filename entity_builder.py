@@ -393,10 +393,9 @@ class DocumentEntity(GeneralEntity):
         for k in self._document.get('dateInfo').keys():
             if k == 'created':
                 try:
-                    date_value = datetime.strftime(
+                    created_date_value = datetime.strftime(
                         datetime.fromisoformat(self._document.get('dateInfo').get(k).get('end')),
                         "%d/%m/%Y")
-                    self._research_data_item[self._field.get('f_research_data_item_create_date')] = [date_value]
                 except TypeError:
                     pass
             else:
@@ -413,6 +412,12 @@ class DocumentEntity(GeneralEntity):
                     )
                 except TypeError:
                     pass
+
+        if self._return_value:
+            return {'created': [created_date_value],
+                    'alt': additional_dates}
+        else:
+            self._research_data_item[self._field.get('f_research_data_item_create_date')] = [created_date_value]
         if additional_dates:
             self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
 
