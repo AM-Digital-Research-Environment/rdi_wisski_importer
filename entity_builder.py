@@ -407,7 +407,7 @@ class DocumentEntity(GeneralEntity):
                                    self._field.get('f_research_data_item_add_date_d'): datetime.strftime(
                                        datetime.fromisoformat(self._document.get('dateInfo').get(k).get('end')),
                                        "%d/%m/%Y"),
-                                   self._field.get('f_research_data_item_add_date_t'): k
+                                   self._field.get('f_research_data_item_add_date_t'): [k]
                                },
                                bundle_id=self._bundle.get('g_research_data_item_date_add'))
                     )
