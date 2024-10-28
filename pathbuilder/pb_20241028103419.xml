@@ -225,7 +225,7 @@
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>beb5d0153069034a6097901efa878950</bundle>
-    <field/>
+    <field>beb5d0153069034a6097901efa878950</field>
     <fieldtype/>
     <displaywidget/>
     <formatterwidget/>
@@ -294,7 +294,7 @@
   </path>
   <path>
     <id>g_research_data_item</id>
-    <weight>15</weight>
+    <weight>12</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>bc22e6a335e012e2274924d2383a084d</bundle>
@@ -1064,7 +1064,7 @@
   </path>
   <path>
     <id>f_project_name</id>
-    <weight>1</weight>
+    <weight>3</weight>
     <enabled>1</enabled>
     <group_id>g_project</group_id>
     <bundle>ba1e7af833adef9939211124f902b3b3</bundle>
@@ -1089,7 +1089,7 @@
   </path>
   <path>
     <id>f_project_id</id>
-    <weight>0</weight>
+    <weight>2</weight>
     <enabled>1</enabled>
     <group_id>g_project</group_id>
     <bundle>ba1e7af833adef9939211124f902b3b3</bundle>
@@ -1144,11 +1144,11 @@
     <group_id>g_research_data_item</group_id>
     <bundle>bc22e6a335e012e2274924d2383a084d</bundle>
     <field>fa83d9364aa6d6fea870f6b695ddfa8f</field>
-    <fieldtype>link</fieldtype>
-    <displaywidget>link_default</displaywidget>
-    <formatterwidget>link</formatterwidget>
+    <fieldtype>string</fieldtype>
+    <displaywidget>string_textfield</displaywidget>
+    <formatterwidget>file_link</formatterwidget>
     <cardinality>-1</cardinality>
-    <field_type_informative>link</field_type_informative>
+    <field_type_informative>string</field_type_informative>
     <path_array>
       <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/information_carrier</x>
       <y>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/has_url</y>
@@ -1294,11 +1294,11 @@
     <group_id>g_research_data_item</group_id>
     <bundle>bc22e6a335e012e2274924d2383a084d</bundle>
     <field>fb9d55f2445db8fec009850ce9ca1646</field>
-    <fieldtype>string_long</fieldtype>
-    <displaywidget>string_textarea</displaywidget>
-    <formatterwidget>basic_string</formatterwidget>
+    <fieldtype>string</fieldtype>
+    <displaywidget>string_textfield</displaywidget>
+    <formatterwidget>string</formatterwidget>
     <cardinality>-1</cardinality>
-    <field_type_informative>string_long</field_type_informative>
+    <field_type_informative>string</field_type_informative>
     <path_array>
       <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/information_carrier</x>
       <y>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/is_described_by</y>
@@ -1437,7 +1437,7 @@
   </path>
   <path>
     <id>g_tag</id>
-    <weight>10</weight>
+    <weight>9</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>b94e1a41367b3cf7d4decc639d67fd5e</bundle>
@@ -1485,7 +1485,7 @@
   </path>
   <path>
     <id>g_loc_type_of_resource</id>
-    <weight>12</weight>
+    <weight>10</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>bccb627215dc5e851f9d5e26aa242175</bundle>
@@ -1533,7 +1533,7 @@
   </path>
   <path>
     <id>g_usage_and_copyright</id>
-    <weight>13</weight>
+    <weight>11</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>bde1d77d1d8673e74663a59875f86e2c</bundle>
@@ -1706,7 +1706,7 @@
   </path>
   <path>
     <id>b_authority_tag</id>
-    <weight>17</weight>
+    <weight>13</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>ba12df9592320d0c0d23b50781084a91</bundle>
@@ -1804,7 +1804,7 @@
   </path>
   <path>
     <id>g_audience</id>
-    <weight>18</weight>
+    <weight>14</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>b8f28bfe3f60ff34be84ce0639b6fd76</bundle>
@@ -1877,7 +1877,7 @@
   </path>
   <path>
     <id>g_subject</id>
-    <weight>19</weight>
+    <weight>15</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>b623249e58e7afc55eec48f59ee0d7f3</bundle>
@@ -2025,7 +2025,7 @@
   </path>
   <path>
     <id>g_authority_role</id>
-    <weight>0</weight>
+    <weight>16</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>bcca8ca49995c14a1b63968e77c54355</bundle>
@@ -2098,7 +2098,7 @@
   </path>
   <path>
     <id>g_authority</id>
-    <weight>0</weight>
+    <weight>17</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>b29200adff33177fbd630f8b8bb55c60</bundle>
@@ -2227,7 +2227,7 @@
   </path>
   <path>
     <id>g_group</id>
-    <weight>0</weight>
+    <weight>18</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>b2ab694d776c8fa7f08e56b161b9882e</bundle>
@@ -2302,7 +2302,7 @@
   </path>
   <path>
     <id>g_funding_body</id>
-    <weight>0</weight>
+    <weight>19</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>bc58c9b0029ccb6439922cd736245612</bundle>
@@ -2382,11 +2382,11 @@
     <group_id>g_research_data_item</group_id>
     <bundle>bc22e6a335e012e2274924d2383a084d</bundle>
     <field>f49a0c60b88d6e60b4084a72c55ab1ce</field>
-    <fieldtype>image</fieldtype>
-    <displaywidget>image_image</displaywidget>
-    <formatterwidget>image_url</formatterwidget>
+    <fieldtype>link</fieldtype>
+    <displaywidget>link_default</displaywidget>
+    <formatterwidget>link</formatterwidget>
     <cardinality>-1</cardinality>
-    <field_type_informative>image</field_type_informative>
+    <field_type_informative>link</field_type_informative>
     <path_array>
       <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/information_carrier</x>
       <y>http://erlangen-crm.org/240307/P130i_features_are_also_found_on</y>
@@ -2456,7 +2456,7 @@
   </path>
   <path>
     <id>g_collection</id>
-    <weight>0</weight>
+    <weight>20</weight>
     <enabled>1</enabled>
     <group_id>0</group_id>
     <bundle>bab007db5659182fbd1b4e62507d4218</bundle>
@@ -2684,5 +2684,190 @@
     <uuid>d46e7530-4d8d-4f47-aaf5-46224179dcac</uuid>
     <is_group>0</is_group>
     <name>Related Items</name>
+  </path>
+  <path>
+    <id>g_project_assoc_person</id>
+    <weight>1</weight>
+    <enabled>1</enabled>
+    <group_id>g_project</group_id>
+    <bundle>b84c450ba2590d6a9e33c7a4344de00f</bundle>
+    <field>b84c450ba2590d6a9e33c7a4344de00f</field>
+    <fieldtype/>
+    <displaywidget/>
+    <formatterwidget/>
+    <cardinality>-1</cardinality>
+    <field_type_informative/>
+    <path_array>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/project</x>
+      <y>http://erlangen-crm.org/240307/P92i_was_brought_into_existence_by</y>
+      <x>http://erlangen-crm.org/240307/E66_Formation</x>
+    </path_array>
+    <datatype_property>empty</datatype_property>
+    <short_name/>
+    <disamb>0</disamb>
+    <description/>
+    <uuid>da24f4e9-a9e1-417c-8bab-fb8a42a8dcbc</uuid>
+    <is_group>1</is_group>
+    <name>Associated Person</name>
+  </path>
+  <path>
+    <id>f_proj_assoc_pers_role</id>
+    <weight>0</weight>
+    <enabled>1</enabled>
+    <group_id>g_project_assoc_person</group_id>
+    <bundle>b84c450ba2590d6a9e33c7a4344de00f</bundle>
+    <field>f04e1aca696a42c5278b7a918e08e5d3</field>
+    <fieldtype>entity_reference</fieldtype>
+    <displaywidget>entity_reference_tree</displaywidget>
+    <formatterwidget>wisski_entity_reference_label</formatterwidget>
+    <cardinality>1</cardinality>
+    <field_type_informative>entity_reference</field_type_informative>
+    <path_array>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/project</x>
+      <y>http://erlangen-crm.org/240307/P92i_was_brought_into_existence_by</y>
+      <x>http://erlangen-crm.org/240307/E66_Formation</x>
+      <y>http://erlangen-crm.org/240307/P15_was_influenced_by</y>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/role</x>
+    </path_array>
+    <datatype_property>empty</datatype_property>
+    <short_name/>
+    <disamb>3</disamb>
+    <description/>
+    <uuid>494f5cff-1896-4aeb-ae02-3772b232e424</uuid>
+    <is_group>0</is_group>
+    <name>Role</name>
+  </path>
+  <path>
+    <id>f_proj_assoc_pers_role_holder</id>
+    <weight>1</weight>
+    <enabled>1</enabled>
+    <group_id>g_project_assoc_person</group_id>
+    <bundle>b84c450ba2590d6a9e33c7a4344de00f</bundle>
+    <field>ff0555ac83db786f694c37dfa8ef2427</field>
+    <fieldtype>entity_reference</fieldtype>
+    <displaywidget>entity_reference_tree</displaywidget>
+    <formatterwidget>wisski_entity_reference_label</formatterwidget>
+    <cardinality>1</cardinality>
+    <field_type_informative>entity_reference</field_type_informative>
+    <path_array>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/project</x>
+      <y>http://erlangen-crm.org/240307/P92i_was_brought_into_existence_by</y>
+      <x>http://erlangen-crm.org/240307/E66_Formation</x>
+      <y>http://erlangen-crm.org/240307/P15_was_influenced_by</y>
+      <x>http://erlangen-crm.org/240307/E21_Person</x>
+    </path_array>
+    <datatype_property>empty</datatype_property>
+    <short_name/>
+    <disamb>3</disamb>
+    <description/>
+    <uuid>ce274c9c-0220-4e5b-8465-cffec7768c73</uuid>
+    <is_group>0</is_group>
+    <name>Role Holder</name>
+  </path>
+  <path>
+    <id>f_proj_assoc_institution</id>
+    <weight>4</weight>
+    <enabled>1</enabled>
+    <group_id>g_project</group_id>
+    <bundle>ba1e7af833adef9939211124f902b3b3</bundle>
+    <field>fd3b12a7d64559cb5d79cfa5b711f719</field>
+    <fieldtype>entity_reference</fieldtype>
+    <displaywidget>entity_reference_tree</displaywidget>
+    <formatterwidget>wisski_entity_reference_label</formatterwidget>
+    <cardinality>-1</cardinality>
+    <field_type_informative>entity_reference</field_type_informative>
+    <path_array>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/project</x>
+      <y>http://erlangen-crm.org/240307/P92i_was_brought_into_existence_by</y>
+      <x>http://erlangen-crm.org/240307/E66_Formation</x>
+      <y>http://erlangen-crm.org/240307/P11_had_participant</y>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/institution</x>
+    </path_array>
+    <datatype_property>empty</datatype_property>
+    <short_name/>
+    <disamb>3</disamb>
+    <description/>
+    <uuid>6372214b-5cf5-40fb-9130-c1452f1dd35e</uuid>
+    <is_group>0</is_group>
+    <name>Associated Instititution</name>
+  </path>
+  <path>
+    <id>f_proj_research_section</id>
+    <weight>0</weight>
+    <enabled>1</enabled>
+    <group_id>g_project</group_id>
+    <bundle>ba1e7af833adef9939211124f902b3b3</bundle>
+    <field>f047fb0a95d39876daeaff0d1e3b26d3</field>
+    <fieldtype>entity_reference</fieldtype>
+    <displaywidget>entity_reference_tree</displaywidget>
+    <formatterwidget>wisski_entity_reference_label</formatterwidget>
+    <cardinality>-1</cardinality>
+    <field_type_informative>entity_reference</field_type_informative>
+    <path_array>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/project</x>
+      <y>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/related_to</y>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/taxonomy_tag</x>
+    </path_array>
+    <datatype_property>empty</datatype_property>
+    <short_name/>
+    <disamb>2</disamb>
+    <description/>
+    <uuid>dfc6ac8f-ba48-4511-a1cb-0ec772e2c2cd</uuid>
+    <is_group>0</is_group>
+    <name>Research Section</name>
+  </path>
+  <path>
+    <id>f_proj_duration</id>
+    <weight>5</weight>
+    <enabled>1</enabled>
+    <group_id>g_project</group_id>
+    <bundle>ba1e7af833adef9939211124f902b3b3</bundle>
+    <field>f537b3a51e06591247b3023ca1149b95</field>
+    <fieldtype>string</fieldtype>
+    <displaywidget>string_textfield</displaywidget>
+    <formatterwidget>string</formatterwidget>
+    <cardinality>1</cardinality>
+    <field_type_informative>string</field_type_informative>
+    <path_array>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/project</x>
+      <y>http://erlangen-crm.org/240307/P92i_was_brought_into_existence_by</y>
+      <x>http://erlangen-crm.org/240307/E66_Formation</x>
+      <y>http://erlangen-crm.org/240307/P4_has_time-span</y>
+      <x>http://erlangen-crm.org/240307/E52_Time-Span</x>
+    </path_array>
+    <datatype_property>http://erlangen-crm.org/240307/P4i_is_time-span_of</datatype_property>
+    <short_name/>
+    <disamb>2</disamb>
+    <description/>
+    <uuid>ecafc8b1-245c-4290-add0-6ee46d6555c5</uuid>
+    <is_group>0</is_group>
+    <name>Duration</name>
+  </path>
+  <path>
+    <id>f_proj_summary</id>
+    <weight>6</weight>
+    <enabled>1</enabled>
+    <group_id>g_project</group_id>
+    <bundle>ba1e7af833adef9939211124f902b3b3</bundle>
+    <field>ff7a1136601bc0dad8ba536701428e94</field>
+    <fieldtype>string_long</fieldtype>
+    <displaywidget>string_textarea</displaywidget>
+    <formatterwidget>basic_string</formatterwidget>
+    <cardinality>-1</cardinality>
+    <field_type_informative>string_long</field_type_informative>
+    <path_array>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/project</x>
+      <y>http://erlangen-crm.org/240307/P70i_is_documented_in</y>
+      <x>http://erlangen-crm.org/240307/E31_Document</x>
+      <y>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/is_described_by_note</y>
+      <x>http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/note</x>
+    </path_array>
+    <datatype_property>http://erlangen-crm.org/240307/P3_has_note</datatype_property>
+    <short_name/>
+    <disamb>3</disamb>
+    <description/>
+    <uuid>25ca671c-0f74-4428-8819-9eaa7d79d420</uuid>
+    <is_group>0</is_group>
+    <name>Summary</name>
   </path>
 </pathbuilderinterface>
