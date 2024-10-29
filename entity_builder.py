@@ -69,6 +69,7 @@ class DocumentEntity(GeneralEntity):
     def document(self, bson_document: dict):
         setattr(self, "_document", bson_document)
 
+
     # Type of Resource (Mandatory Field)
     def resource_type(self):
         self._research_data_item[self._field.get('f_research_data_item_type_res')] = [
@@ -79,6 +80,7 @@ class DocumentEntity(GeneralEntity):
             )
         ]
 
+
     # Project (Mandatory Field)
     def project(self):
         self._research_data_item[self._field.get('f_research_data_item_project')] = [
@@ -88,6 +90,7 @@ class DocumentEntity(GeneralEntity):
               cache=self._cache
             )
         ]
+
 
     # Collection
     def collection(self):
@@ -106,8 +109,8 @@ class DocumentEntity(GeneralEntity):
                 # Initialising collection field
                 self._research_data_item[self._bundle.get("g_res_item_collection")] = [collection_entity]
 
-    # Entity list of identifiers
 
+    # Entity list of identifiers
     def identifier_entities(self):
         # Initialising DRE Identifier
         _dreidfields_ = {
@@ -141,6 +144,7 @@ class DocumentEntity(GeneralEntity):
         else:
             self._research_data_item[self._bundle.get('g_research_data_item_identifier')] = entity_list
 
+    
     # Language
     def language(self):
         if self._document.get('language'):
@@ -156,6 +160,7 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_item_language')] = lang_list
 
+    
     # Citation
     def citation(self):
         if self._document.get('citation'):
@@ -166,6 +171,7 @@ class DocumentEntity(GeneralEntity):
                 self._research_data_item[
                     self._field.get('f_research_data_item_citation')
                 ] = self._document.get('citation')
+
 
     # Geographic Location
     def originlocation(self):
@@ -235,6 +241,7 @@ class DocumentEntity(GeneralEntity):
             if _subregion_values:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = _subregion_values
 
+
     # Current Location
     def currentlocation(self):
         if self._document.get('location').get('current'):
@@ -251,6 +258,7 @@ class DocumentEntity(GeneralEntity):
                     self._field.get('f_research_data_item_located_at')
                 ] = _current_location_value
 
+
     # URL
     def url_link(self):
         if self._document.get('url'):
@@ -258,6 +266,7 @@ class DocumentEntity(GeneralEntity):
                 return self._document.get('url')
             else:
                 self._research_data_item[self._field.get('f_research_data_item_url')] = self._document.get('url')
+
 
     # Copyright
     def copyright(self):
@@ -270,6 +279,7 @@ class DocumentEntity(GeneralEntity):
                 return _copyright_values
             else:
                 self._research_data_item[self._field.get('f_research_data_item_copyright')] = _copyright_values
+
 
     # Target Audience
     def target_audience(self):
@@ -285,6 +295,7 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_target_audience')] = _target_audience_values
 
+
     # Abstract
     def abstract(self):
         if self._document.get('abstract') and pd.isna(self._document.get('abstract')) is False:
@@ -292,6 +303,7 @@ class DocumentEntity(GeneralEntity):
                 return [self._document.get('abstract')]
             else:
                 self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
+
 
     # Table of Content
     def tabel_of_content(self):
@@ -303,6 +315,7 @@ class DocumentEntity(GeneralEntity):
                     self._document.get('tableOfContents')
                 ]
 
+
     # Note(s)
     def note(self):
         if self._document.get('note') and pd.isna(self._document.get('note')) is False:
@@ -310,6 +323,7 @@ class DocumentEntity(GeneralEntity):
                 return [self._document.get('note')]
             else:
                 self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
+
 
     # Associated Person (Mandatory Field)
     def role(self):
@@ -334,6 +348,7 @@ class DocumentEntity(GeneralEntity):
                            self._field.get('f_research_data_item_apers_role'): [sponsor_role]
                        }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
             )
+        
         for name in self._document.get('name'):
             qualifier = name.get('name').get('qualifier')
             ass_entity_type = {
@@ -363,7 +378,11 @@ class DocumentEntity(GeneralEntity):
                     bundle_id=self._bundle.get("g_research_data_item_ass_person"),
                 )
             )
-        self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
+        if self._return_value:
+            return name_entity_list
+        else:
+            self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
+
 
     # Title Information
     def titles(self):
@@ -387,30 +406,39 @@ class DocumentEntity(GeneralEntity):
             if title_entity_list:
                 self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
 
+
     # Dates
     def dateinfo(self):
+        # Initialize list to store additional dates
         additional_dates = []
+
+        # Loop through all dates in dateInfo
         for k in self._document.get('dateInfo').keys():
+            # Special handling for the created date
             if k == 'created':
                 try:
+                    # Convert ISO date to dd/mm/yyyy format
                     created_date_value = datetime.strftime(
                         datetime.fromisoformat(self._document.get('dateInfo').get(k).get('end')),
                         "%d/%m/%Y")
-                except TypeError:
+                except (TypeError, ValueError) as e:  # Catch ValueError too
                     pass
+            
+            # Handle all other date types (captured & valid dates)
             else:
                 try:
+                    # Create Entity objects for additional dates
                     additional_dates.append(
                         Entity(api=self._api,
                                fields={
-                                   self._field.get('f_research_data_item_add_date_d'): datetime.strftime(
+                                   self._field.get('f_research_data_item_add_date_d'): [datetime.strftime(
                                        datetime.fromisoformat(self._document.get('dateInfo').get(k).get('end')),
-                                       "%d/%m/%Y"),
+                                       "%d/%m/%Y")],
                                    self._field.get('f_research_data_item_add_date_t'): [k]
                                },
                                bundle_id=self._bundle.get('g_research_data_item_date_add'))
                     )
-                except TypeError:
+                except (TypeError, ValueError) as e:
                     pass
 
         if self._return_value:
@@ -418,11 +446,11 @@ class DocumentEntity(GeneralEntity):
                     'alt': additional_dates}
         else:
             self._research_data_item[self._field.get('f_research_data_item_create_date')] = [created_date_value]
-        if additional_dates:
-            self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
+            if additional_dates:
+                self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
+
 
     # Technical Description
-
     def physicaldesc(self):
         pd_dict = self._document.get('physicalDescription')
 
@@ -457,8 +485,8 @@ class DocumentEntity(GeneralEntity):
         if pd_dict.get('tech'):
             self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = pd_dict.get('tech')
 
-    # Genre
 
+    # Genre
     def genre(self):
         genre_dict = {
             'marc': 'MARC Genre Term List',
@@ -499,7 +527,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
-    # Subject
+
+    # Subject(s)
     def subject(self):
         if self._document.get('subject'):
             subject_list = []
@@ -545,7 +574,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_item_subject')] = subject_list
 
-    # Tags
+
+    # Tag(s)
     def tags(self):
         if self._document.get('tags'):
             _tag_values = entity_list_generate(
@@ -559,7 +589,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_reseach_data_item_tag')] = _tag_values
 
-    # URL
+
+    # Preview Image URL
     def preview_image(self):
         try:
             if self._document.get('previewImage'):
@@ -572,8 +603,8 @@ class DocumentEntity(GeneralEntity):
         except KeyError:
             pass
 
-    # Staged Values
 
+    # Staged Values
     def staging(self):
         self.resource_type()
         self.project()
