@@ -73,6 +73,13 @@ class DocumentUpdate(DocumentEntity):
                             field_name=self._bundle.get("g_res_item_collection"),
                             default_values=self.collection()
                         )
+                    
+                    case 'AssociatedEntities':
+                        self.build(
+                            **kwargs,
+                            field_name=self._bundle.get('g_research_data_item_ass_person'),
+                            default_values=self.role()
+                        )
 
                     case 'language':
                         self.build(
@@ -158,11 +165,25 @@ class DocumentUpdate(DocumentEntity):
                             default_values=self.titles()['main']
                         )
                     
-                    case 'altTitles':                            
+                    case 'altTitle':                            
                         self.build(
                             **kwargs,
                             field_name=self._field.get('g_research_data_item_title'),
                             default_values=self.titles()['alt']
+                        )
+                    
+                    case 'createDate':                            
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_create_date'),
+                            default_values=self.dateinfo()['created']
+                        )
+                    
+                    case 'altDate':                            
+                        self.build(
+                            **kwargs,
+                            field_name=self._bundle.get('g_research_data_item_date_add'),
+                            default_values=self.dateinfo()['alt']
                         )
                     
                     case _:
