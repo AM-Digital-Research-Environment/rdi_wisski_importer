@@ -210,11 +210,8 @@ class DocumentUpdate(DocumentEntity):
                     self._edit_entity.fields[field_name] = self._edit_entity.fields[field_name].append(push_value)
                     self._api.save(self._edit_entity)
                 else:
-                    if default_values:
-                        self._edit_entity.fields[field_name] = default_values
-                        self._api.save(self._edit_entity)
-                    else:
-                        print('No values were found in staged list. Hence process was aborted.')
+                    self._edit_entity.fields[field_name] = default_values
+                    self._api.save(self._edit_entity)
                 print("{field} updated!".format(field=method))
             except KeyError:
                 print("{field} was not updated. Please check values passed.".format(field=method))
