@@ -52,7 +52,7 @@ class DocumentEntity(GeneralEntity):
         self._api = api
 
         # BSON Metadata Document
-        self._document = None
+        self._document = {}
     
         # Entity URI cache
         self._cache = cache
@@ -64,25 +64,26 @@ class DocumentEntity(GeneralEntity):
 
         # Core dictionary for Research Data Items
         self._research_data_item = {}
-      
-      
+
     def document(self, bson_document: dict):
         setattr(self, "_document", bson_document)
 
-
     # Type of Resource (Mandatory Field)
-    def resource_type(self):
-        self._research_data_item[self._field.get('f_research_data_item_type_res')] = [
+    def resource_type(self) -> list | None:
+        _resource_type = [
             entity_uri(
               self._document.get('typeOfResource'),
               self._query.get('typeofresource'),
               cache=self._cache
             )
         ]
-
+        if self._return_value:
+            return _resource_type
+        else:
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = _resource_type
 
     # Project (Mandatory Field)
-    def project(self):
+    def project(self) -> list | None:
         _project_entity = [
             entity_uri(
               self._document.get('project')['id'],
@@ -95,9 +96,8 @@ class DocumentEntity(GeneralEntity):
         else:
             self._research_data_item[self._field.get('f_research_data_item_project')] = _project_entity
 
-
     # Collection
-    def collection(self):
+    def collection(self) -> Entity | None:
         if self._document.get('collection'):
             # Collection fields
             collection_fields = {
@@ -113,9 +113,8 @@ class DocumentEntity(GeneralEntity):
                 # Initialising collection field
                 self._research_data_item[self._bundle.get("g_res_item_collection")] = [collection_entity]
 
-
     # Entity list of identifiers
-    def identifier_entities(self):
+    def identifier_entities(self) -> list | None:
         # Initialising DRE Identifier
         _dreidfields_ = {
             self._field["f_research_data_item_id_name"]: [self._document.get("dre_id")],
@@ -148,9 +147,8 @@ class DocumentEntity(GeneralEntity):
         else:
             self._research_data_item[self._bundle.get('g_research_data_item_identifier')] = entity_list
 
-    
     # Language
-    def language(self):
+    def language(self) -> Entity | None:
         if self._document.get('language'):
             document_languages = [try_func(l.lower(), lambda x: self._language.get(x)) for l in self._document.get('language')]
             lang_list = entity_list_generate(
@@ -164,9 +162,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_item_language')] = lang_list
 
-    
     # Citation
-    def citation(self):
+    def citation(self) -> Entity | None:
         if self._document.get('citation'):
             citation_value = self._document.get('citation')
             if self._return_value:
@@ -176,9 +173,8 @@ class DocumentEntity(GeneralEntity):
                     self._field.get('f_research_data_item_citation')
                 ] = self._document.get('citation')
 
-
     # Geographic Location
-    def originlocation(self):
+    def originlocation(self) -> dict | None:
         _origin = self._document.get('location').get('origin')
         _country_values = []
         _region_values = []
@@ -245,9 +241,8 @@ class DocumentEntity(GeneralEntity):
             if _subregion_values:
                 self._research_data_item[self._field.get('f_research_data_item_creat_subre')] = _subregion_values
 
-
     # Current Location
-    def currentlocation(self):
+    def currentlocation(self) -> list | None:
         if self._document.get('location').get('current'):
             _current_location_value = entity_list_generate(
                 value_list=self._document.get('location').get('current'),
@@ -262,18 +257,16 @@ class DocumentEntity(GeneralEntity):
                     self._field.get('f_research_data_item_located_at')
                 ] = _current_location_value
 
-
     # URL
-    def url_link(self):
+    def url_link(self) -> str | None:
         if self._document.get('url'):
             if self._return_value:
                 return self._document.get('url')
             else:
                 self._research_data_item[self._field.get('f_research_data_item_url')] = self._document.get('url')
 
-
     # Copyright
-    def copyright(self):
+    def copyright(self) -> list | None:
         if self._document.get('accessCondition')['rights']:
             _copyright_values = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
@@ -284,9 +277,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_item_copyright')] = _copyright_values
 
-
     # Target Audience
-    def target_audience(self):
+    def target_audience(self) -> list | None:
         if self._document.get('targetAudience'):
             _target_audience_values = entity_list_generate(
                 value_list=self._document.get('targetAudience'),
@@ -299,18 +291,16 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_target_audience')] = _target_audience_values
 
-
     # Abstract
-    def abstract(self):
+    def abstract(self) -> list | None:
         if self._document.get('abstract') and pd.isna(self._document.get('abstract')) is False:
             if self._return_value:
                 return [self._document.get('abstract')]
             else:
                 self._research_data_item[self._field.get('f_research_data_abstract')] = [self._document.get('abstract')]
 
-
     # Table of Content
-    def tabel_of_content(self):
+    def tabel_of_content(self) -> list | None:
         if self._document.get('tableOfContents') and pd.isna(self._document.get('tableOfContents')) is False:
             if self._return_value:
                 return [self._document.get('tableOfContents')]
@@ -319,18 +309,16 @@ class DocumentEntity(GeneralEntity):
                     self._document.get('tableOfContents')
                 ]
 
-
     # Note(s)
-    def note(self):
+    def note(self) -> list | None:
         if self._document.get('note') and pd.isna(self._document.get('note')) is False:
             if self._return_value:
                 return [self._document.get('note')]
             else:
                 self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
 
-
     # Associated Person (Mandatory Field)
-    def role(self):
+    def role(self) -> list | None:
         name_entity_list = []
         sponsor_role = entity_uri(
             search_value="Sponsor", query_string=self._query.get("role"), cache=self._cache
@@ -387,9 +375,8 @@ class DocumentEntity(GeneralEntity):
         else:
             self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
 
-
     # Title Information
-    def titles(self):
+    def titles(self) -> dict | None:
         title_entity_list = []
         for title in self._document.get('titleInfo'):
             if title.get('title_type') == 'main':
@@ -410,9 +397,8 @@ class DocumentEntity(GeneralEntity):
             if title_entity_list:
                 self._research_data_item[self._bundle.get('g_research_data_item_title')] = title_entity_list
 
-
     # Dates
-    def dateinfo(self):
+    def dateinfo(self) -> dict | None:
         # Initialize list to store additional dates
         additional_dates = []
 
@@ -453,9 +439,8 @@ class DocumentEntity(GeneralEntity):
             if additional_dates:
                 self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
 
-
     # Technical Description
-    def physicaldesc(self):
+    def physicaldesc(self) -> list | None:
         pd_dict = self._document.get('physicalDescription')
 
         resource_type_dict = {
@@ -485,13 +470,17 @@ class DocumentEntity(GeneralEntity):
         else:
             self._research_data_item[self._bundle.get('g_reseach_data_item_res_type')] = pd_entity
 
-        # Technical Property
-        if pd_dict.get('tech'):
-            self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = pd_dict.get('tech')
-
+    # Technical Property
+    def technical_property(self) -> list | None:
+        _tech_property = self._document.get('physicalDescription').get('tech')
+        if _tech_property:
+            if self._return_value:
+                return _tech_property.get('tech')
+            else:
+                self._research_data_item[self._field.get('f_reseach_data_item_tech_prop')] = _tech_property.get('tech')
 
     # Genre
-    def genre(self):
+    def genre(self) -> list | None:
         genre_dict = {
             'marc': 'MARC Genre Term List',
             'loc': 'Library of Congress Genre',
@@ -531,9 +520,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
-
     # Subject(s)
-    def subject(self):
+    def subject(self) -> list | None:
         if self._document.get('subject'):
             subject_list = []
             for sub in self._document.get("subject"):
@@ -578,9 +566,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_research_data_item_subject')] = subject_list
 
-
     # Tag(s)
-    def tags(self):
+    def tags(self) -> list | None:
         if self._document.get('tags'):
             _tag_values = entity_list_generate(
                 value_list=self._document.get('tags'),
@@ -593,9 +580,8 @@ class DocumentEntity(GeneralEntity):
             else:
                 self._research_data_item[self._field.get('f_reseach_data_item_tag')] = _tag_values
 
-
     # Preview Image URL
-    def preview_image(self):
+    def preview_image(self) -> str | None:
         try:
             if self._document.get('previewImage'):
                 if self._return_value:
@@ -607,9 +593,8 @@ class DocumentEntity(GeneralEntity):
         except KeyError:
             pass
 
-
     # Staged Values
-    def staging(self):
+    def staging(self) -> dict:
         self.resource_type()
         self.project()
         self.collection()
@@ -628,13 +613,14 @@ class DocumentEntity(GeneralEntity):
         self.titles()
         self.dateinfo()
         self.physicaldesc()
+        self.technical_property()
         self.genre()
         self.subject()
         self.tags()
         self.preview_image()
         return self._research_data_item
 
-    def upload(self):
+    def upload(self) -> None:
         self._api.save(Entity(
             api=self._api,
             fields=self.staging(),
