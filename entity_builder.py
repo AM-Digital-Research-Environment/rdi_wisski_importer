@@ -83,13 +83,17 @@ class DocumentEntity(GeneralEntity):
 
     # Project (Mandatory Field)
     def project(self):
-        self._research_data_item[self._field.get('f_research_data_item_project')] = [
+        _project_entity = [
             entity_uri(
               self._document.get('project')['id'],
               self._query.get('projectid'),
               cache=self._cache
             )
         ]
+        if self._return_value:
+            return _project_entity
+        else:
+            self._research_data_item[self._field.get('f_research_data_item_project')] = _project_entity
 
 
     # Collection
