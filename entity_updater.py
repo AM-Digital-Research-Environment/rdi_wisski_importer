@@ -77,7 +77,7 @@ class DocumentUpdate(DocumentEntity):
                     case 'project':
                         self.build(
                             **kwargs,
-                            field_name=self._bundle.get("f_research_data_item_project"),
+                            field_name=self._field.get("f_research_data_item_project"),
                             default_values=self.project()
                         )
 
