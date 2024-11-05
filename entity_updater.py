@@ -144,6 +144,13 @@ class DocumentUpdate(DocumentEntity):
                             default_values=self.note()
                             )
                     
+                    case 'abstract':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_abstract'),
+                            default_values=self.abstract()
+                            )
+                    
                     case 'tags':
                         self.build(
                             **kwargs,
@@ -217,8 +224,12 @@ class DocumentUpdate(DocumentEntity):
                     self._edit_entity.fields[field_name] = self._edit_entity.fields[field_name].append(push_value)
                     self._api.save(self._edit_entity)
                 else:
-                    self._edit_entity.fields[field_name] = default_values
-                    self._api.save(self._edit_entity)
+                    if default_values == None:
+                        self._edit_entity.fields[field_name] = []
+                        self._api.save(self._edit_entity)
+                    else:
+                        self._edit_entity.fields[field_name] = default_values
+                        self._api.save(self._edit_entity)          
                 print("{field} updated!".format(field=method))
             except KeyError:
                 print("{field} was not updated. Please check values passed.".format(field=method))
