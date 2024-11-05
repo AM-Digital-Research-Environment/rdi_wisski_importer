@@ -315,9 +315,7 @@ class DocumentEntity(GeneralEntity):
             if self._return_value:
                 return [self._document.get('tableOfContents')]
             else:
-                self._research_data_item[self._field.get('f_research_data_item_toc')] = [
-                    self._document.get('tableOfContents')
-                ]
+                self._research_data_item[self._field.get('f_research_data_item_toc')] = [self._document.get('tableOfContents')]
 
 
     # Note(s)
