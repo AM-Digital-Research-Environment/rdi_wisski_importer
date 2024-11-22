@@ -112,14 +112,14 @@ class DocumentUpdate(DocumentEntity):
                     case 'region':
                         self.build(
                             **kwargs,
-                            field_name=self._field.get('f_research_data_creat_regio'),
+                            field_name=self._field.get('f_research_data_item_creat_regio'),
                             default_values=self.originlocation().get('l2')
                             )
 
                     case 'subregion':
                         self.build(
                             **kwargs,
-                            field_name=self._field.get('f_research_data_creat_subre'),
+                            field_name=self._field.get('f_research_data_item_creat_subre'),
                             default_values=self.originlocation().get('l3')
                             )
 
