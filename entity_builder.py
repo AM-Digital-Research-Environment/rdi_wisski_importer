@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import NamedTuple, MutableMapping
 from urllib.parse import urlparse
+import re
 
 import pandas as pd
 from wisski.api import Api, Entity
@@ -72,13 +73,17 @@ class DocumentEntity(GeneralEntity):
 
     # Type of Resource (Mandatory Field)
     def resource_type(self):
-        self._research_data_item[self._field.get('f_research_data_item_type_res')] = [
+        _type_of_resource = [
             entity_uri(
               self._document.get('typeOfResource'),
               self._query.get('typeofresource'),
               cache=self._cache
             )
         ]
+        if self._return_value:
+            return _type_of_resource
+        else:
+            self._research_data_item[self._field.get('f_research_data_item_type_res')] = _type_of_resource
 
 
     # Project (Mandatory Field)
@@ -321,10 +326,29 @@ class DocumentEntity(GeneralEntity):
     # Note(s)
     def note(self):
         if self._document.get('note') and pd.isna(self._document.get('note')) is False:
+            note_value = self._document.get('note')
+            
+            # Split into lines while preserving intentional line breaks
+            lines = note_value.splitlines()
+            
+            # Clean each line separately
+            cleaned_lines = []
+            for line in lines:
+                # Remove any non-printable characters while keeping extended Latin
+                cleaned_line = re.sub(r'[^\x20-\x7E\u00A0-\u00FF]', '', line)
+                # Normalize whitespace within each line
+                cleaned_line = ' '.join(cleaned_line.strip().split())
+                # Additional safety check
+                cleaned_line = ''.join(char for char in cleaned_line if ord(char) >= 32)
+                cleaned_lines.append(cleaned_line)
+            
+            # Join lines back together with newlines
+            cleaned_note = '\n'.join(line for line in cleaned_lines if line)
+            
             if self._return_value:
-                return [self._document.get('note')]
+                return [cleaned_note]
             else:
-                self._research_data_item[self._field.get('f_research_data_note')] = [self._document.get('note')]
+                self._research_data_item[self._field.get('f_research_data_note')] = [cleaned_note]
 
 
     # Associated Person (Mandatory Field)
