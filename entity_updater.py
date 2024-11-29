@@ -136,6 +136,13 @@ class DocumentUpdate(DocumentEntity):
                             field_name=self._bundle.get('g_reseach_data_item_res_type'),
                             default_values=self.physicaldesc()
                             )
+                        
+                    case 'TypeOfResource':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_type_res'),
+                            default_values=self.resource_type()
+                            )
 
                     case 'note':
                         self.build(
