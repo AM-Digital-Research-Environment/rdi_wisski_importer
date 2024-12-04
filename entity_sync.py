@@ -146,25 +146,14 @@ class EntitySync(GeneralEntity):
 
     def affiliations_update(self, single_person: str | None = None):
         """
-        Updates person entities with new affiliations from MongoDB
+        Updates person entities with new affiliations from MongoDB.
 
         Args:
         single_person (str, optional): Name of specific person to update
+        Returns:
+        str: A summary of the update process including successes and warnings
         """
-        # Define person query with proper prefixes and {search_value} placeholder
-        person_query = """
-        PREFIX am: <http://www.wisski.uni-bayreuth.de/ontologies/africamultiple/240307/>
-        PREFIX ecrm: <http://erlangen-crm.org/240307/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        SELECT ?id WHERE {{
-            ?id rdf:type ecrm:E21_Person .
-            ?id ecrm:P1_is_identified_by ?labelEntity .
-            ?labelEntity rdf:type ecrm:E41_Appellation .
-            ?labelEntity am:person_name ?labelValue .
-            FILTER(str(?labelValue) = "{search_value}")
-        }}"""
-
-        # Retrieve person(s) from MongoDB, filtered by name if provided
+        # Get persons from MongoDB, filtered by name if provided
         if single_person:
             mongo_persons = [p for p in self._collection if p['name'] == single_person]
         else:
@@ -181,10 +170,10 @@ class EntitySync(GeneralEntity):
             try:
                 print("Processing person:", person['name'])
                 
-                # Query WissKI to find the URI of the person
+                # Query WissKI to find the URI of the person using predefined query
                 existing_uri = entity_uri(
                     search_value=person['name'],
-                    query_string=person_query,
+                    query_string=self._query.get('person'),   # This query already includes {search_value}
                     return_format='csv',
                     value_input=True
                 )
@@ -228,8 +217,7 @@ class EntitySync(GeneralEntity):
                             fields[self._field.get('f_person_affiliation')] = current_affiliations
                             update_details.append(f"{person['name']} -> {', '.join(affiliations)}")
                         else:
-                            # Try to get all institutions to see what's available
-                            # If no affiliations were found, log a warning
+                            # If no affiliations were found, log a warning and show available institutions
                             all_institutions = entity_uri(
                                 search_value=None,
                                 query_string=self._query.get('institutionlist'),
