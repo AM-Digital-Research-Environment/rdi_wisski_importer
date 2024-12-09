@@ -206,6 +206,13 @@ class DocumentUpdate(DocumentEntity):
                             field_name=self._bundle.get('g_research_data_item_date_add'),
                             default_values=self.dateinfo()['alt']
                         )
+
+                    case 'repository':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_res_item_data_repository'),
+                            default_values=self.repository()
+                        )
                     
                     case _:
                         print(f'No field found with name {_method_value}')
