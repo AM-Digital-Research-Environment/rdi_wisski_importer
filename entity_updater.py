@@ -80,6 +80,13 @@ class DocumentUpdate(DocumentEntity):
                             field_name=self._field.get("f_research_data_item_project"),
                             default_values=self.project()
                         )
+                    
+                    case 'subject':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get("f_research_data_item_subject"),
+                            default_values=self.subject()
+                        )
 
                     case 'AssociatedEntities':
                         self.build(
