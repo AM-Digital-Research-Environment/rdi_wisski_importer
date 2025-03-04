@@ -95,6 +95,13 @@ class DocumentUpdate(DocumentEntity):
                             default_values=self.role()
                         )
 
+                    case 'IdentifierEntities':
+                        self.build(
+                            **kwargs,
+                            field_name=self._bundle.get('g_research_data_item_identifier'),
+                            default_values=self.identifier_entities()
+                        )
+
                     case 'language':
                         self.build(
                             **kwargs,
@@ -108,6 +115,13 @@ class DocumentUpdate(DocumentEntity):
                             field_name=self._field.get('f_research_data_item_citation'),
                             default_values=self.citation()
                             )
+                        
+                    case 'copyright':
+                        self.build(
+                            **kwargs,
+                            field_name=self._field.get('f_research_data_item_copyright'),
+                            default_values=self.copyright()
+                        )
 
                     case 'country':
                         self.build(
