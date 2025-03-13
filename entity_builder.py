@@ -113,7 +113,7 @@ class DocumentEntity(GeneralEntity):
                 api=self._api, fields=collection_fields,
                 bundle_id=self._bundle.get('g_res_item_collection'))
             if self._return_value:
-                return collection_entity
+                return [collection_entity]
             else:
                 # Initialising collection field
                 self._research_data_item[self._bundle.get("g_res_item_collection")] = [collection_entity]
