@@ -67,15 +67,36 @@ def entity_uri(
     sparql.setReturnFormat(format_dict[return_format])
     sparql.setHTTPAuth('BASIC')
     sparql.setCredentials(config['sparql_username'], config['sparql_password'])
+    
     if value_input:
         if not conditional:
-            sparql.setQuery(query_string.format(search_value=search_value))
+            # If search_value is a string, escape any special characters for SPARQL
+            if isinstance(search_value, str):
+                # Double quotes and backslashes need to be escaped in SPARQL
+                escaped_value = search_value.replace('\\', '\\\\').replace('"', '\\"')
+                
+                # Use the escaped value in the query
+                formatted_query = query_string.format(search_value=escaped_value)
+            else:
+                formatted_query = query_string.format(search_value=search_value)
+                
+            sparql.setQuery(formatted_query)
         elif conditional:
             assert isinstance(search_value, tuple)
-            sparql.setQuery(query_string.format(**search_value._asdict()))
+            # Escape any string values in the tuple
+            escaped_dict = {}
+            for key, value in search_value._asdict().items():
+                if isinstance(value, str):
+                    escaped_dict[key] = value.replace('\\', '\\\\').replace('"', '\\"')
+                else:
+                    escaped_dict[key] = value
+                    
+            sparql.setQuery(query_string.format(**escaped_dict))
     elif not value_input:
         sparql.setQuery(query_string)
+
     query_response = sparql.queryAndConvert()
+    
     if return_format == 'json':
         try:
             val = str(query_response["results"]["bindings"][0]["id"]["value"])
