@@ -85,8 +85,17 @@ class EntitySync(GeneralEntity):
         missing = []
         for entity in mongoList:
             if entity not in wisskiList:
-                # Gets full entity data from MongoDB for missing entities
-                missing.append(jm.search(f"[?name == '{entity}']", mongo_response)[0])
+                # Instead of using f-string, use a more robust approach, which handles the escaping properly
+                results = []
+                for item in mongo_response:
+                    if item.get('name') == entity:
+                        results.append(item)
+                
+                # Only append if a match was found
+                if results:
+                    missing.append(results[0])
+                else:
+                    print(f"Warning: Could not find '{entity}' in MongoDB response")
             else:
                 pass
         return missing
