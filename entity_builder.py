@@ -88,17 +88,20 @@ class DocumentEntity(GeneralEntity):
 
     # Project (Mandatory Field)
     def project(self):
-        _project_entity = [
-            entity_uri(
-              self._document.get('project')['id'],
-              self._query.get('projectid'),
-              cache=self._cache
-            )
-        ]
-        if self._return_value:
-            return _project_entity
-        else:
-            self._research_data_item[self._field.get('f_research_data_item_project')] = _project_entity
+        try:
+            _project_entity = [
+                entity_uri(
+                  self._document.get('project')['id'],
+                  self._query.get('projectid'),
+                  cache=self._cache
+                )
+            ]
+            if self._return_value:
+                return _project_entity
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_project')] = _project_entity
+        except KeyError:
+            pass
 
 
     # Collection
@@ -436,6 +439,7 @@ class DocumentEntity(GeneralEntity):
     # Dates
     def dateinfo(self):
         # Initialize list to store additional dates
+        created_date_value = []
         additional_dates = []
 
         # Loop through all dates in dateInfo
@@ -449,7 +453,6 @@ class DocumentEntity(GeneralEntity):
                         "%d/%m/%Y")
                 except (TypeError, ValueError) as e:  # Catch ValueError too
                     pass
-            
             # Handle all other date types (captured & valid dates)
             else:
                 try:
@@ -471,7 +474,8 @@ class DocumentEntity(GeneralEntity):
             return {'created': [created_date_value],
                     'alt': additional_dates}
         else:
-            self._research_data_item[self._field.get('f_research_data_item_create_date')] = [created_date_value]
+            if created_date_value:
+                self._research_data_item[self._field.get('f_research_data_item_create_date')] = [created_date_value]
             if additional_dates:
                 self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
 
@@ -649,6 +653,7 @@ class DocumentEntity(GeneralEntity):
 
     # Staged Values
     def staging(self):
+        self._research_data_item = {}
         self.resource_type()
         self.project()
         self.collection()
