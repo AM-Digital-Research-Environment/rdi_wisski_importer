@@ -86,7 +86,7 @@ class DocumentEntity(GeneralEntity):
             self._research_data_item[self._field.get('f_research_data_item_type_res')] = _type_of_resource
 
 
-    # Project (Mandatory Field)
+    # Project
     def project(self):
         try:
             _project_entity = [
