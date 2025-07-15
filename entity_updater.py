@@ -235,6 +235,13 @@ class DocumentUpdate(DocumentEntity):
                             default_values=self.repository()
                         )
                     
+                    case 'sponsor':
+                        self.build(
+                            **kwargs,
+                            field_name=self._bundle.get('g_research_data_item_ass_person'),
+                            default_values=self.sponsor_only()
+                        )
+                    
                     case _:
                         print(f'No field found with name {_method_value}')
 

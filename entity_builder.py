@@ -56,7 +56,7 @@ class DocumentEntity(GeneralEntity):
         self._document = None
     
         # Entity URI cache
-        self._cache = cache
+        self._cache = cache if cache is not None else {}
 
         # Function to return Entity values (Bool)
         self._return_value = return_value
@@ -88,17 +88,18 @@ class DocumentEntity(GeneralEntity):
 
     # Project (Mandatory Field)
     def project(self):
-        _project_entity = [
-            entity_uri(
-              self._document.get('project')['id'],
-              self._query.get('projectid'),
-              cache=self._cache
-            )
-        ]
-        if self._return_value:
-            return _project_entity
-        else:
-            self._research_data_item[self._field.get('f_research_data_item_project')] = _project_entity
+        if self._document.get('project'):
+            _project_entity = [
+                entity_uri(
+                self._document.get('project')['id'],
+                self._query.get('projectid'),
+                cache=self._cache
+                )
+            ]
+            if self._return_value:
+                return _project_entity
+            else:
+                self._research_data_item[self._field.get('f_research_data_item_project')] = _project_entity
 
 
     # Collection
@@ -409,6 +410,37 @@ class DocumentEntity(GeneralEntity):
         else:
             self._research_data_item[self._bundle.get('g_research_data_item_ass_person')] = name_entity_list
 
+    # Sponsor only (For targeted sponsor updates)
+    def sponsor_only(self):
+        """
+        Returns only sponsor entities from the document.
+        """
+        sponsor_entity_list = []
+        sponsor_role = entity_uri(
+            search_value="Sponsor", query_string=self._query.get("role"), cache=self._cache
+        )
+
+        # Sponsor (Associated Group) (mandatory field)
+        # Fetches sponsor uri/creates Entity object in case of exception
+        for funder in self._document.get("sponsor"):
+            sponsor_value = entity_uri(
+                search_value=funder, query_string=self._query.get("sponsor"), cache=self._cache
+            )
+            
+            if sponsor_value is None:
+                sponsor_value = self._field_functions.exception('sponsor')(funder)
+            sponsor_entity_list.append(
+                Entity(api=self._api,
+                    fields={
+                        self._field.get('f_research_data_item_sponsor'): [sponsor_value],
+                        self._field.get('f_research_data_item_apers_role'): [sponsor_role]
+                    }, bundle_id=self._bundle.get('g_research_data_item_ass_person'))
+            )
+        
+        if self._return_value:
+            return sponsor_entity_list
+        else:
+            return sponsor_entity_list
 
     # Title Information
     def titles(self):
@@ -649,6 +681,7 @@ class DocumentEntity(GeneralEntity):
 
     # Staged Values
     def staging(self):
+        self._research_data_item = {}
         self.resource_type()
         self.project()
         self.collection()
