@@ -281,7 +281,7 @@ class DocumentEntity(GeneralEntity):
 
 
     # Copyright
-    def copyright(self):
+    def copyright(self) -> None | list:
         if self._document.get('accessCondition')['rights']:
             _copyright_values = entity_list_generate(
                 self._document.get('accessCondition')['rights'],
@@ -471,11 +471,11 @@ class DocumentEntity(GeneralEntity):
                     pass
 
         if self._return_value:
-            return {'created': [created_date_value],
+            return {'created': created_date_value,
                     'alt': additional_dates}
         else:
             if created_date_value:
-                self._research_data_item[self._field.get('f_research_data_item_create_date')] = [created_date_value]
+                self._research_data_item[self._field.get('f_research_data_item_create_date')] = created_date_value
             if additional_dates:
                 self._research_data_item[self._bundle.get('g_research_data_item_date_add')] = additional_dates
 
