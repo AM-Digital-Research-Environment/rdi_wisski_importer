@@ -636,20 +636,20 @@ class DocumentEntity(GeneralEntity):
     def repository(self):
         _repo_id = re.search(r"(?<=\w{3}\-)(.*)(?=\-\w{4})", self._document.get("dre_id"))[0]
         if _repo_id != "99":
-            if self._return_value:
-                return [entity_uri(
+            repo_value = [entity_uri(
                     search_value=f"R{_repo_id}",
                     query_string=self._query.get('repository'),
                     cache=self._cache
                 )]
-            else:
+        else:
+            repo_value = []
+        if self._return_value:
+            return repo_value
+        else:
+            if repo_value:
                 self._research_data_item[
                     self._field.get('f_res_item_data_repository')
-                ] = [entity_uri(
-                    search_value=f"R{_repo_id}",
-                    query_string=self._query.get('repository'),
-                    cache=self._cache
-                )]
+                ] = repo_value
 
     # Staged Values
     def staging(self):
