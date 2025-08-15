@@ -530,7 +530,7 @@ class DocumentEntity(GeneralEntity):
         for authority in genre_terms.keys():
             authority_uri = entity_uri(
                 search_value=genre_dict.get(authority),
-                query_string=self._query.get("identifier"),
+                query_string=self._query.get("authority"),
                 cache=self._cache
             )
             for term in genre_terms.get(authority):
@@ -552,10 +552,10 @@ class DocumentEntity(GeneralEntity):
                 elif urlparse(term_uri).scheme != '':
                     genre_entities.append(term_uri)
 
-            if self._return_value:
-                return genre_entities
-            else:
-                self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
+        if self._return_value:
+            return genre_entities
+        else:
+            self._research_data_item[self._field.get('f_research_data_item_auth_tag')] = genre_entities
 
 
     # Subject(s)
