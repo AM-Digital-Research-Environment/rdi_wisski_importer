@@ -193,21 +193,32 @@ class DocumentEntity(GeneralEntity):
         _subregion_values = []
 
         for loc_obj in _origin:
+            # Extract string from list if needed
+            l1 = loc_obj.get("l1")
+            l2 = loc_obj.get("l2")
+            l3 = loc_obj.get("l3")
+            if isinstance(l1, list):
+                l1 = l1[0] if l1 else ""
+            if isinstance(l2, list):
+                l2 = l2[0] if l2 else ""
+            if isinstance(l3, list):
+                l3 = l3[0] if l3 else ""
+
             # Country
-            if not pd.isna(loc_obj.get('l1')) and loc_obj.get('l1') != "":
+            if not pd.isna(l1) and l1 != "":
                 _country_values.append(
                     entity_uri(
-                        search_value=loc_obj.get("l1"),
+                        search_value=l1,
                         query_string=self._query.get("country"),
                         cache=self._cache
                     )
                 )
 
             # Region (level 2)
-            if not pd.isna(loc_obj.get('l2')) and loc_obj.get('l2') != "":
+            if not pd.isna(l2) and l2 != "":
                 _region_uri = entity_uri(
                     search_value=RegionFormatHolder(
-                        level_0=loc_obj.get("l2"), level_1=loc_obj.get("l1")
+                        level_0=l2, level_1=l1
                     ),
                     query_string=self._query.get("region"),
                     conditional=True,
@@ -219,10 +230,10 @@ class DocumentEntity(GeneralEntity):
             """
             In case of an exception we assume, that the region values is already given.
             """
-            if not pd.isna(loc_obj.get('l3')) and loc_obj.get('l3') != "":
+            if not pd.isna(l3) and l3 != "":
                 _subregion = entity_uri(
                     search_value=RegionFormatHolder(
-                        level_0=loc_obj.get("l3"), level_1=loc_obj.get("l2")
+                        level_0=l3, level_1=l2
                     ),
                     query_string=self._query.get("subregion"),
                     conditional=True,
@@ -232,7 +243,7 @@ class DocumentEntity(GeneralEntity):
                     _subregion_values.append(_subregion)
                 elif not _subregion:
                     _subregion_values.append(
-                        self._field_functions.exception('subregion')(entity_value=loc_obj.get('l3'),
+                        self._field_functions.exception('subregion')(entity_value=l3,
                                                                      qualifier_value=_region_uri,
                                                                      with_qualifier=True)
                     )

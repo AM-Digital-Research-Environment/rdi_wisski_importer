@@ -207,10 +207,10 @@ class DocumentUpdate(DocumentEntity):
                             default_values=self.titles()['main']
                         )
                     
-                    case 'altTitle':                            
+                    case 'altTitle':
                         self.build(
                             **kwargs,
-                            field_name=self._field.get('g_research_data_item_title'),
+                            field_name=self._bundle.get('g_research_data_item_title'),
                             default_values=self.titles()['alt']
                         )
                     

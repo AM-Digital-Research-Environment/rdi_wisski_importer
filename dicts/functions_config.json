@@ -1,6 +1,6 @@
 {
-    "sparql_endpoint": "graphdb_url",
-    "sparql_username": "your_graphdb_username",
-    "sparql_password": "your_graphdb_password",
-    "mongo_uri": "your_MongoDB_Client_bot_URI"
+    "sparql_endpoint": "http://132.180.10.89:7200/repositories/wisski_2024-08-13",
+    "sparql_username": "admin",
+    "sparql_password": "WissKIAI4#",
+    "mongo_uri": "mongodb://bot:WissKI%401231@132.180.10.89:27017/?authMechanism=DEFAULT"
   }
