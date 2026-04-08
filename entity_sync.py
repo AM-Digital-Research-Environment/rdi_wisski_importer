@@ -164,9 +164,9 @@ class EntitySync(GeneralEntity):
         """
         # Get persons from MongoDB, filtered by name if provided
         if single_person:
-            mongo_persons = [p for p in self._collection if p['name'] == single_person]
+            mongo_persons = [p for p in self._collection if p.get('name') == single_person]
         else:
-            mongo_persons = self._collection
+            mongo_persons = [p for p in self._collection if 'name' in p]
         
         # If no persons are found, return a message
         if not mongo_persons:
